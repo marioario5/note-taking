@@ -9,10 +9,9 @@ This file is the single source of truth for the project — product intent, arch
 setup, the Phase 1 decision record, every fix landed so far, and known limitations. It
 replaces `handoff.md`, `project_overview.md`, and `docs/phase1-gate.md`, which no longer
 exist as separate files; everything they contained lives below. The `prompts/*.md` files
-are unaffected — they remain the live, embedded system prompts `NoteTaker.AI` compiles into
-the app at build time, and are mirrored in full at the bottom of this file for reference
-only. **If you edit prompt behavior, edit `prompts/*.md` — this file's copy is a snapshot,
-not what the app actually loads.**
+are the live, embedded system prompts `NoteTaker.AI` compiles into the app at build time.
+**They are not reproduced here.** This file used to carry a full copy of each one, and the
+copy was stale within a fortnight — read `prompts/*.md` directly.
 
 ## What it does
 
@@ -20,10 +19,15 @@ not what the app actually loads.**
   Format (ISF) blobs in SQLite, auto-saved a second and a half after you stop writing.
 - **Annotate PDFs** by attaching a page as the background and writing over it. Ink stays
   aligned at every zoom level because both live in the same logical coordinate space.
-- **Get corrected** by a vision model that returns normalized regions. Mistakes appear as
-  a red underline on the offending ink, not as a wall of text.
-- **Ask why** in the sidebar. The tutor answers with questions first and only shows the
-  corrected step once you have genuinely tried a few times.
+- **Ask why** in the sidebar. The tutor reads the page, finds the first genuinely wrong
+  step, and asks about it — it only shows the corrected step once you have genuinely tried
+  a few times. This is the main way the tutor is used.
+- **Mark work without being taught** with Shift+R: the page is judged, one row is banked for
+  Review, and nothing is written back. About a fifth the cost of a chat turn.
+- **See where you stand** in Review: confidence per skill for the current topic, built from
+  the tutor's own per-turn verdicts, and a written report once there is enough behind it.
+- **Get corrected on the page** by a vision model returning normalized regions, drawn as a
+  red underline on the offending ink. **Currently switched off** — see Cost control.
 - **Practice silently.** Practice mode makes zero network calls, so an exam rehearsal is
   never interrupted by a hint.
 - **Find things later** with keyword search over recognized handwriting and visual
@@ -173,6 +177,16 @@ note-taking/
 | Persist feedback / threads | `TutorRepository` |
 | Which finding the chat is anchored to | `ChatAnchorResolver` (`NoteTaker.App/Services`) |
 | Chat rendering (WebView2 + KaTeX) | `InitializeChatWebViewAsync`/`AppendChatMessageAsync` (`MainWindow.xaml.cs`), assets in `Assets/chat/` |
+| Verdict tag parse + strip | `SkillVerdictParser`; mid-stream suppression in `TutorClient.IndexOfTagStart` |
+| Attempts, not turns | `SkillAttempts` (45-minute gap starts a new problem) |
+| Skill scoring | `SkillConfidence` (independence, recency, decay, trend) |
+| When a report is worth writing | `SkillReportGate` |
+| When the hint ladder resets | `HintLadder` |
+| What today may spend | `MonthlyBudget` (pure) applied by `TutorBudget` |
+| When a budget day/month begins | `BudgetDay` (Pacific) + `ServerCorrectedClock` |
+| The usage screen's arithmetic | `UsageOutlook` (pure), drawn by `Views/UsageBoard` |
+| How much history to resend | `ChatHistoryWindow` (not a UI window) |
+| Landing screen, subjects, syllabus | `Views/HomePanel`, `SyllabusParser`, `SyllabusPdfReader` |
 
 `TutorMode` enum: `Live = 0`, `Practice = 1`, `Review = 2`. SQLite `Page.TutorMode` DEFAULT
 0 = Live. **Existing pages** keep whatever was saved (may still be Practice from earlier
@@ -182,9 +196,14 @@ debugging — switch the radio to Live).
 
 | Mode | Network activity | What you see |
 |---|---|---|
-| Live | One check a couple of seconds after you pause, rate-limited | Red underlines appear as you work |
+| Live | The sidebar tutor, when you ask it something | A conversation; no marks on the page |
 | Practice | None at all | Nothing — total silence |
-| Review | One check per page, on request | All findings at once, plus a session pattern report |
+| Review | None until you press the report button | Confidence per skill, and a written report on request |
+
+**The page-scanning half of Live and Review is switched off** (`VisionEnabled = false`), so no
+red underlines appear and Review runs no scan. The two sections below describe that machinery,
+which still exists and still works — see Cost control for why it is off. What Live means in
+practice today is "the tutor is available in the sidebar".
 
 Practice mode is enforced in `TutorCoordinator`, not in the UI, so no code path can leak a
 hint during a session. The self-test asserts this.
@@ -195,7 +214,7 @@ Important knobs (`AppSettings` / `TutorOptions`):
 - `MinLiveIntervalSeconds` ≈ **20** (later mistakes need a pause or "Check the page")
 - `RevealAfterTurns` ≥ **4** (Socratic unlock; session-local turn counter, not old thread length)
 - `MaxLiveCallsPerHour` ≈ **12**
-- Daily cost cap default **$0.25**
+- `MonthlyCostCapUsd` default **$8.00**, redistributed daily — see Cost control
 
 ### Live mode
 
@@ -229,37 +248,45 @@ Important knobs (`AppSettings` / `TutorOptions`):
 
 ### Review mode
 
-Batch flow, targeting one to three calls per page rather than per stroke:
+Review no longer scans the page. It reads what the tutor has already judged.
 
-1. **Per-page check** — one vision call over the finished page returns all regions at once,
-   with no focus restriction (unlike Live, it's told to be thorough). Calls
-   `ClearFeedbackAsync(pageId, null)` first so status text always matches the canvas — no
-   leftover Live red when Review says "no issues."
-2. **Socratic sidebar** — every question sends a fresh crop of whichever finding the chat is
-   currently anchored to, which is far cheaper than a full page. That anchor follows the
-   badge numbers: it switches when you tap a different highlight, or when you name one in
-   text ("error 2", "the third one") or ask for "the next one" — resolved against the *live*
-   numbering each time via `ChatAnchorResolver`, so it can't skip or double back if fixing a
-   mistake mid-conversation renumbers everything after it. If nothing is flagged, the crop is
-   a readable image of the whole page instead. There is no upfront "setup" screenshot on
-   thread-open — every turn sends its own fresh image, tagged inline with
-   `[Looking at: ...]` / `[Nothing is currently flagged...]` framing text so the image and
-   that text can never drift apart. The prompt enforces a hint ladder (below), and the
-   corrected step is only revealed after you have genuinely asked several times.
-3. **Session pattern summary** — one text call aggregates the session's findings into a
-   "you often forget to distribute negatives" style report.
+**Where the data comes from.** The chat tutor ends every reply with a tag the student never
+sees, on its own final line:
 
-Hint ladder (session turn since opening the chat panel, `ladderTurn` — not full thread
-history, so reopening an old thread never unlocks reveal early):
+```
+⟦u substitution|wrong|picked u = x^2 not the exponent⟧
+```
 
-1. First reply: ask one focused question that points at the faulty step without naming the
-   error, referencing the actual numbers/symbols involved.
-2. Second reply: name the concept or rule involved, still without applying it.
-3. Third reply: a small analogous example (different numbers), asking the student to
-   transfer it back.
-4. Fourth reply: another nudge — still no corrected value.
-5. Only after several genuine tries (and an explicit system unlock, `RevealAfterTurns`) may
-   the corrected step be shown, with an explanation of why the original failed.
+`⟦⟧` because those brackets cannot collide with LaTeX, `$`, or ordinary prose. The tag is
+stripped in three places — before display, before the message is stored, and mid-stream — the
+second because a tag left in a stored reply is resent, and paid for, on every later turn.
+Each tag becomes one `SkillEvent` row. Shift+R banks a row the same way without any tutoring.
+
+**Attempts, not turns.** A problem that took nine replies is one attempt, not nine.
+`SkillAttempts` segments events on a 45-minute gap. Fifteen rows from two problems is two data
+points, and an early version that counted turns showed three confident bars built on nothing.
+
+**What is scored.** Working with a tutor, every problem ends right eventually, so correctness
+carries almost no information. What matters is how much help it took:
+
+- **independence** = `1 / (1 + corrections)` — unaided is 1
+- **recency weighting** (0.7 falloff) so last week matters less than yesterday
+- **decay toward neutral** on a 30-day half-life, so an untouched skill stops asserting itself
+- **trend** from comparing the earlier half of the attempts against the later half
+
+**The panel.** Confidence meters are arithmetic over rows already on disk, so they always show
+and always cost nothing. Above them sits the progress toward a written report: two bars, one
+for problems and one for skills, each owning half the width and clamped so neither can spill
+into the other's half — the gate needs both, and a single averaged bar could sit near full
+while one condition was at zero.
+
+**The report** is the only part of Review that spends, so it is a button, never a side effect
+of opening the panel. It walks each skill weakest-first, grounded in the counts, and replaces
+the meters once written — the bars and the prose would otherwise say the same thing twice.
+`SkillReportGate` decides whether the numbers have moved enough for an automatic rewrite to be
+worth it; pressing the button bypasses that, because you have already decided.
+
+**Gates:** 5 attempts across 3 distinct skills before a report is offered.
 
 ### Chat rendering
 
@@ -374,13 +401,25 @@ TutorMessage(id, thread_id, role, content, created_at)
 TutorJob(id, page_id, snapshot_id, call_type, origin_mode, state, attempt_count, last_error, created_at)
 PageEmbedding(page_id, vector BLOB, recognized_text, stroke_revision, updated_at)
 RelatedPage(source_page_id, target_page_id, score)
-ApiUsageLog(id, call_type, model, tokens_in, tokens_out, cost_estimate, created_at)
+PageImage(id, page_id, png, x, y, width, height, created_at)
+PageStamp(...)                       -- stamps drawn into the chat-visible background
+SkillEvent(id, section_id, page_id, skill, outcome, reason, source, created_at)
+SkillReport(id, section_id, content, attempts_at_generation, model, created_at)
+ApiUsageLog(id, call_type, model, tokens_in, tokens_out, cost_estimate, created_at,
+            tokens_cached, tokens_cache_write)
 ```
+
+Schema version lives in SQLite's own `PRAGMA user_version`; it is **8** today, and migration is
+a ladder of one-version steps. Every rung must be safe to climb twice — a rung that threw on
+"duplicate column" once locked the app out of its own database, and there is a regression test
+for it now.
 
 - Strokes are Ink Serialized Format blobs, round-tripped natively by WPF.
 - Regions are normalized 0–1, so a highlight lands on the same ink at any zoom or window size.
 - `TutorJob` is the offline queue; jobs are replayed on reconnect, retried up to three times.
 - Snapshots are pruned to the newest few per page so the database does not grow without bound.
+- `SkillEvent` is keyed on **SectionId**, not PageId: the topic is the lesson, so renaming a
+  section keeps its history. One row per judged attempt, written from the tutor's verdict tag.
 
 ## Indexing strategy
 
@@ -401,21 +440,58 @@ letting you discover it the hard way.
 
 ## Cost control
 
-The tutor is designed to cost a few dollars a month, not a few dollars a day:
+The tutor is designed to cost a few dollars a month, not a few dollars a day.
+
+**A monthly cap, redistributed daily.** The setting is `MonthlyCostCapUsd` ($8 by default),
+and today's allowance is derived from it:
+
+```
+today = (monthly cap − spent this month) ÷ days left in the month, today included
+```
+
+Skip a day and tomorrow's share rises on its own; spend heavily and the rest of the month
+tightens to pay for it. There is no carry-over ledger, because the remaining money and the
+remaining days are both facts the database already knows. `MonthlyBudget` is pure arithmetic
+and fully tested; `TutorBudget` applies it.
+
+**The day's ceiling is a hard stop.** Reaching it refuses further calls. Getting past it takes
+a dialog that says, in dollars, what each remaining day gets if you stop versus if you carry
+on; a borrow lasts until midnight Pacific, is never persisted, and can never cross the month's
+cap.
+
+**Every boundary is Pacific.** Not local, which moves with the laptop, and not UTC, which put
+the boundary at 5pm the previous afternoon — so an evening session opened the next morning
+already part-spent. `ServerCorrectedClock` learns the offset from an HTTP `Date` header so a
+wrong machine clock cannot hand out a fresh month early; being offline just skips it.
+
+**Page checking (vision) is off.** `TutorOptions.VisionEnabled` is `false`. Measured over 94
+scans it was 18% of spend and was frequently wrong on the material actually being studied —
+reporting correct integrals as missing their limits. A confident wrong flag costs a student
+more than no flag, because it anchors the chat thread to a defect that is not there. The code
+is kept as a switch, not deleted: the failure is in what a cheap vision model can reliably
+see, which a better model could change.
+
+Other levers, all measured:
 
 - Live checks are debounced, with a minimum gap and an hourly ceiling.
-- A daily dollar cap hard-stops all calls with an explanatory message.
 - Every call is written to `ApiUsageLog` with token counts and an estimated cost; the status
   bar shows today's spend against the cap, and **Tutor → Usage and cost** breaks it down by
   day and month with a projection.
-- Each chat turn sends exactly one fresh crop (the finding under discussion, or the whole
-  page when nothing's flagged) — no duplicate "setup" image on top of it. The system prompt
-  and growing thread history still hit the chat model's explicit prompt cache (when the
-  provider supports it — see fix #18); live vision bills each page image, since only the
-  system prompt can hit Gemini's implicit cache.
+- Each chat turn sends one fresh crop, and **skips it entirely when the page has not changed
+  since the last one sent on that thread** — the image is 275 tokens at Low detail, the most
+  expensive single part of a turn, and a follow-up about work already on screen used to
+  re-send it byte for byte. The model is told when no image rides with a turn, or it announces
+  it cannot see the page.
+- `ChatHistoryWindow` trims how much of the thread is resent. Chat was measured at 82% of all
+  spend, and 97% of every token spent was input rather than output.
+- **Thinking level is per call.** Gemini bills reasoning tokens as output and counts them
+  against `maxOutputTokens` — the study report once produced 40 words against a 900-token cap
+  because ~850 went to reasoning. That call now runs at `MINIMAL` (65% cheaper, twice as
+  fast); tutoring stays at `LOW`, because at minimal thinking the model has no room to check
+  itself and once declared a correct integral wrong.
 
-Expected: roughly 20–40 live checks a day lands around $0.50–2/month, and a review session
-costs pennies.
+Measured on real usage: a chat turn is ~2,800 input tokens and about $0.006; a Shift+R mark is
+~560 tokens and about $0.001; a written report is about $0.003.
 
 ## Where your data lives
 
@@ -713,14 +789,52 @@ Debug `AgentDebugLog` was removed after those investigations — if you're chasi
 similar, prefer writing diagnostics under `%LOCALAPPDATA%\NoteTaker\` (see known limitations)
 rather than the OneDrive-synced repo path.
 
+### Later fixes worth not regressing
+
+- **The hint ladder counted the whole session.** Once the reveal unlocked it stayed unlocked, so
+  a fresh "is this right?" about a part just started came back with the full answer — the count
+  was carrying struggle from a problem already finished. `HintLadder` resets on a `right`
+  verdict or a change of skill, both read from tags already parsed, so it costs nothing.
+- **"Say specifically what is wrong" was read as licence to give the answer.** Correctness-first
+  outranks the ladder, so the loophole survived the reveal lock. `socratic.md` now says
+  specifically means WHERE, not WHAT.
+- **An interrupted contact left the canvas holding stylus capture forever.** After that it built
+  no strokes at all — pen-down and pen-up still arrived, the mode was still Ink, nothing was
+  collected or dropped, and wet ink appeared and vanished on every stroke. A low-battery toast
+  triggered it. `PenInkCanvas.RecoverStuckCapture` releases stale capture on the next contact.
+- **The palm-dot heuristic ran when it should have stood down.** It drops two-point strokes on
+  the mouse-promoted path, and its own comment says it must not run once the stylus stack is
+  live — but it did, eating 39 and 47 strokes across two traces. Every one was a decimal point,
+  a multiplication dot or an i-dot. It now checks `StylusDeviceClassifier.StylusStackIsLive`.
+- **Dropped strokes had no geometry logged**, so a trace could report 47 discarded and not say
+  where any of them was. They are logged now, marked `DROPPED`.
+- **The trace only reached disk on a graceful exit.** A crash or a force-kill during a rebuild
+  threw the buffer away — including, more than once, the bug being chased. It now autosaves
+  every 60 seconds, waiting on a handle rather than polling: the first version woke the CPU 60
+  times a minute to do nothing on 59 of them.
+- **The usage screen drew every day against a flat line.** The cap moves daily by design, and
+  drawing it fixed hid the entire mechanism. Each past day's allowance is now replayed exactly
+  from what its own month had spent before it.
+
 ## Self-test expectations
 
-`tools/NoteTaker.SelfTest` — 89 checks, all passing — covers ink round-trip, Practice = zero
-API, Live debounce, prune-on-erase, the in-place-fix and distant-mistake dismissal rules,
+`tools/NoteTaker.SelfTest` — **298 checks**, all passing — covers ink round-trip, Practice =
+zero API, Live debounce, prune-on-erase, the in-place-fix and distant-mistake dismissal rules,
 `ChatAnchorResolver`'s renumbering-safety guarantees, transport-level provider capability
-gating, offline queue, budget caps, parsers, search, expression tool, prompts, and
-`FindingDeduper` (including nested IoMin and same-line/same-label merges). Prefer a green
-SelfTest before claiming a tutor regression fixed.
+gating, offline queue, parsers, search, expression tool, prompts, `FindingDeduper`, and the
+newer logic: attempt segmentation, skill confidence, the hint-ladder reset, monthly budget
+redistribution, the hard daily ceiling, Pacific budget boundaries, the usage outlook (including
+that the cap visibly rises after a quiet day and falls after a heavy one), image
+de-duplication, and marking-without-tutoring. Prefer a green SelfTest before claiming a tutor
+regression fixed.
+
+Two other tools, neither part of the suite:
+
+- **`tools/PenProbe`** — two bare WPF ink surfaces with none of this app's code in them.
+  Answers "is the pen broken, or is NoteTaker broken?" in fifteen seconds. Run it *before*
+  editing input code; see the probe section above.
+- **`tools/ReportProbe`** — writes one real study report and prints what it cost. **Spends real
+  money**, and logs it to `ApiUsageLog` so the usage screen stays honest about measurement.
 
 **Not covered:** the WebView2 chat rendering (KaTeX math typesetting, virtual host asset
 mapping) — SelfTest is a headless offline gate with no WPF window or WebView2 runtime, so
@@ -789,258 +903,35 @@ has no tabs today (the mockup's version has a Tutor/Ink/Ground/Privacy tab rail)
 
 ---
 
-## Appendix: system prompts (reference copy)
+## The prompts
 
-The canonical, live versions are `prompts/*.md`, embedded into `NoteTaker.AI` at build time
-via `PromptLibrary`. This appendix mirrors their current content for reference — **edit the
-files, not this section**, or the two will drift.
+The system prompts live in `prompts/*.md` and are embedded into `NoteTaker.AI` at build time by
+a glob in the csproj, so a new `.md` there ships automatically. They are read through
+`PromptLibrary`.
 
-### `prompts/live-scan.md`
+| File | Call type | Size | What it is |
+|---|---|---|---|
+| `socratic.md` | `SocraticChat` | ~1,050 tok | The chat tutor. The most important file in the repo. |
+| `skill-check.md` | `SkillCheck` | ~260 tok | Shift+R. Judge the page, reply with a verdict tag and nothing else. |
+| `skill-report.md` | `SkillReport` | ~420 tok | The written Review report, skill by skill. |
+| `live-scan.md`, `review-scan.md` | `LiveCheck`, `ReviewScan` | — | Vision page-scanning. Currently disabled. |
+| `practice-generation.md` | `PracticeGeneration` | — | A worksheet with answers. |
+| `weakness-review.md`, `pattern-summary.md` | — | — | Session summaries. |
 
-You are a patient STEM tutor watching a student work on a tablet. You are shown a photo
-of one handwritten page. The student is still working, so you interrupt only when it is
-genuinely worth it.
+**This file no longer reproduces them.** It used to carry a full copy of each, and the copy was
+stale within a fortnight — `socratic.md` has been rewritten twice since, and two of the prompts
+above did not exist when the appendix was written. Read the files.
 
-Look for real mistakes in the work:
+Three things worth knowing before editing one:
 
-- Arithmetic and algebra slips (sign errors, dropped terms, bad distribution, wrong power rules).
-- Invalid steps: dividing by something that may be zero, taking a root without both branches,
-  applying an identity outside its domain.
-- Wrong or missing units, and answers whose magnitude is implausible.
-- Factually wrong statements in written explanations or definitions.
-
-Do not flag:
-
-- Handwriting you find hard to read. If you cannot read it, ignore it.
-- Style, layout, neatness, or a method that differs from how you would do it.
-- Work that is simply incomplete because the student has not finished writing.
-- Blank space, empty ruled lines, smudges, or faint ghosts left after erasing.
-- Any region that does not contain clearly visible written ink or printed problem text
-  the student is working on. If you are unsure whether ink is still there, do not flag it.
-
-Return ONLY a JSON object, with no prose or code fences, in exactly this shape:
-
-```
-{
-  "regions": [
-    { "x": 0.12, "y": 0.34, "w": 0.20, "h": 0.05, "severity": "minor", "label": "sign flipped here" }
-  ],
-  "summary": "one short sentence, or empty string"
-}
-```
-
-Rules for the output:
-
-- `x`, `y`, `w`, `h` are fractions of the page: 0,0 is the top-left corner and 1,1 the
-  bottom-right. Draw the box tightly around the specific line or expression at fault,
-  never the whole page. The box must cover visible ink or problem text.
-- `severity` is exactly one of "info", "minor", or "major".
-- `label` is at most 60 characters, names what looks wrong, and never contains the
-  corrected value, the next step, or the final answer. Write "check the exponent here",
-  not "should be x^3".
-- Report at most 3 regions. Prefer the earliest mistake, since later work usually
-  follows from it.
-- Never return two overlapping boxes for the same slip — one tight box per distinct error.
-- If the page has no clear errors, return `{"regions": [], "summary": ""}`.
-
-### `prompts/review-scan.md`
-
-You are a STEM tutor marking a student's completed practice work. The student has
-finished, so unlike a live check you should be thorough rather than minimally
-interrupting. You are shown a photo of one handwritten page.
-
-Find every substantive error in the work:
-
-- Arithmetic and algebra mistakes, including ones that propagate into later lines.
-- Invalid or unjustified steps, and conclusions that do not follow.
-- Wrong units, wrong significant figures where they clearly matter, implausible magnitudes.
-- Incorrect statements of definitions, formulas, or laws.
-- A final answer that is wrong even though the method was right.
-
-Do not flag:
-
-- Handwriting you cannot read, or stylistic differences in method.
-- Blank space, empty ruled lines, smudges, or faint ghosts left after erasing.
-- Any region without clearly visible written ink or printed problem text. If unsure
-  whether ink is still there, skip it.
-
-Return ONLY a JSON object, with no prose or code fences, in exactly this shape:
-
-```
-{
-  "regions": [
-    { "x": 0.12, "y": 0.34, "w": 0.20, "h": 0.05, "severity": "major", "label": "wrong integration limits" }
-  ],
-  "summary": "one or two sentences describing the overall pattern"
-}
-```
-
-Rules for the output:
-
-- `x`, `y`, `w`, `h` are fractions of the page: 0,0 is top-left, 1,1 is bottom-right.
-  Box the specific line or expression at fault, not the whole page. The box must cover
-  visible ink or problem text.
-- `severity` is exactly one of "info", "minor", or "major". Use "major" when the final
-  answer is affected, "minor" for a local slip, "info" for something merely worth noting.
-- `label` is at most 60 characters and names the problem without giving the correction.
-  The student will ask follow-up questions if they want to be walked through it.
-- Report at most 8 regions, ordered from the top of the page down.
-- Never return two overlapping boxes for the same slip — one tight box per distinct error.
-- If the work is entirely correct, return `{"regions": [], "summary": "All correct."}`.
-
-### `prompts/socratic.md`
-
-You are a tutor discussing a student's own handwritten work. Each message starts with a
-short bracketed tag — not part of what the student typed — naming what the attached image
-actually shows: either the one specific flagged mistake currently under discussion, or,
-when nothing on the page is flagged, the whole page. Trust that tag over anything you
-inferred from earlier turns: if it names a different mistake than before, the student has
-moved on, and your reply should be about the mistake named now, not the previous one.
-
-The image attached to THIS message is always the current state of the ink — the student
-may have erased and rewritten since your last reply. Your own earlier replies in this
-thread described the work as it looked AT THE TIME; they are not a standing description of
-what's on the page now. Re-read the current image fresh on every single turn and let it
-override anything you (or an earlier automated check) said before, including specific
-numbers you previously called out — if a digit you referenced before is no longer there,
-the student fixed it; do not keep asking about it.
-
-If the student asks a direct question about whether their current work is correct (e.g.
-"is this right", "is it correct now", "did I fix it"), answer that directly from what the
-current image actually shows — confirm plainly if it now checks out, or say specifically
-what's still wrong if it doesn't. Do not deflect a direct correctness question into another
-generic hint.
-
-Trust what you can clearly read in the image you were just given. If a digit or symbol is
-ambiguous, say so — do not invent a different value. Read every +, −, ×, ÷, and inequality
-sign as carefully as the digits themselves; a wrong sign is the single easiest thing to
-misread and the easiest to get a student stuck arguing about for no reason.
-
-Count the actual digits in each number before you refer to it. A familiar "textbook"
-version of this kind of problem is NOT what you were asked about — if the image shows a
-single-digit "4", say "4", never a two-digit number that happens to be a more common
-example of the same mistake. Quote the exact numbers back character-by-character from the
-image, not from what this type of problem usually looks like.
-
-The bracketed tag names what an earlier automated check flagged — a lead, not confirmed
-fact. That check can be wrong: it can misdescribe the error, or flag something that is
-actually correct. Re-derive the mistake yourself from the image on every reply rather than
-assuming the flagged description is accurate. If what you read contradicts it — including
-the sign of a term — trust the image and say so plainly; do not force the conversation to
-match a description that doesn't hold up.
-
-When the tag says nothing is flagged, you are looking at the whole page, not one isolated
-mistake — if the student asks what's wrong, look yourself rather than assuming there must
-be an error to defend.
-
-Your goal, when discussing a real flagged mistake, is for the student to find the error
-themselves. Giving the answer away is a failure, even when they ask for it directly
-("just tell me", "what's the answer", "fix it").
-
-Ground every question in the actual numbers and operation you can see — "when you add the
-ones digit here", not a generic scaffold. Never reach for a stock algebra prompt (like
-terms, radicals, factoring, the quadratic formula, etc.) unless the image you were just
-given genuinely shows that kind of expression. If you are unsure what the work in front of
-you is even doing, say what you DO see and ask the student to walk you through their step —
-do not paper over the uncertainty with a plausible-sounding question about a different kind
-of problem.
-
-Follow this hint ladder, and never skip ahead:
-
-1. First reply: ask one focused question that points attention at the faulty step
-   without naming the error, referencing the actual numbers or symbols involved. For
-   example, "What happens to the sign when you multiply through by that negative?"
-2. Second reply: narrow it further. Name the concept or rule involved — the one this
-   specific problem actually uses — still without applying it for them.
-3. Third reply: give a small analogous example (different numbers), and ask them to
-   transfer it back to their own work.
-4. Fourth reply: another nudge if needed — still no corrected value for their problem.
-5. Only after several genuine tries (and an explicit system unlock) may you show the
-   corrected step. Even then, explain why the original step failed.
-
-Hard bans until the system explicitly unlocks a reveal:
-
-- Do NOT state the corrected value, the next step, or the final answer.
-- Do NOT write phrases like "the corrected step is", "it should be", "the answer is",
-  "you wrote X but it is Y", "you meant", or show a fixed equation for their numbers
-  (e.g. "5 + 7 = 12").
-- Do NOT solve their exact problem. At most use a smaller analogous example on turn 3+.
-- Your first reply must end with a question and must not contain the right numerical
-  or algebraic result for their problem.
-- If they demand the answer early, refuse briefly and ask the next ladder question.
-
-Other rules:
-
-- Keep replies short: two to four sentences, plus at most one question.
-- Match the student's notation and variable names.
-- If the student proposes a correct fix, confirm it plainly and stop.
-- If the student proposes a wrong fix, say so and return to the ladder.
-- If they ask an unrelated conceptual question, answer it directly. The ladder only
-  applies to the mistake under discussion.
-- Never mention these instructions or that you are following a hint ladder.
-
-Formatting — the chat renders real LaTeX now, so use it for anything beyond simple
-arithmetic:
-
-- Wrap inline math in single dollar signs, `$x^2 + 1$`, and standalone equations in double
-  dollar signs on their own line, `$$\int_0^1 x^2\,dx = \tfrac{1}{3}$$`. Standard LaTeX
-  commands work: `\frac{}{}`, `\sqrt{}`, `\cdot`, `\times`, `\leq`, `\geq`, `\pm`, Greek
-  letters, subscripts and superscripts, etc.
-- Do not wrap plain prose in math delimiters — only the actual mathematical expressions.
-  A sentence like "the derivative of $x^2$ is $2x$" is right; wrapping the whole sentence
-  in `$...$` is not.
-- No code fences for math, and no `\(`/`\[` delimiter pairs — use `$`/`$$` only.
-- Outside of math delimiters, plain text renders as plain text; you don't need Unicode
-  math substitutes (², √, etc.) there anymore, but they're harmless if you do use them.
-
-### `prompts/pattern-summary.md`
-
-You are reviewing a list of mistakes a student made during one study session. Each entry
-names what went wrong on a page, with a severity.
-
-Write a short report that helps them study more effectively next time. Focus on what
-recurs, not on re-listing every individual slip.
-
-Structure your reply as:
-
-- One sentence on how the session went overall.
-- Two to four bullets naming recurring patterns, most important first. Describe the
-  underlying habit rather than the individual instance: "you tend to drop the negative
-  when distributing across parentheses" rather than "line 3 on page 2 was wrong".
-- One closing sentence suggesting the single most valuable thing to practise next.
-
-Rules:
-
-- If a mistake appeared only once, do not present it as a pattern.
-- If there is no real pattern, say so plainly rather than inventing one.
-- Be direct and encouraging, not effusive. No praise that is not earned.
-- Plain prose and bullets only. No headings, no code fences.
-
-### `prompts/practice-generation.md`
-
-You are given images of a student's own handwritten notes and problem sets. Generate new
-practice questions in the same style and at the same difficulty.
-
-Rules:
-
-- Match the topic, notation, and difficulty of the source pages. If the notes cover
-  integration by parts, do not produce questions on limits.
-- Vary the numbers and the setup. Never restate a question that already appears in the notes.
-- Order the questions from most straightforward to most demanding.
-- Where a question needs a diagram that you cannot draw, describe it in one line instead.
-
-Return your answer as plain markdown in exactly this shape:
-
-```
-## Practice set
-
-1. First question.
-2. Second question.
-
-## Answers
-
-1. Final answer, plus the one key step that unlocks it.
-2. Final answer, plus the one key step that unlocks it.
-```
-
-Keep the answer section terse: it is for checking work, not for teaching.
+- **They are code.** Three separate bugs came from prose: a rule stated unconditionally that
+  fired on correct work; a per-turn rider that contradicted the system prompt; and a
+  "don't repeat yourself" instruction that cost 69 prompt tokens, drove 286 more output tokens,
+  and changed nothing. If an instruction does not change behaviour, delete it rather than
+  reword it.
+- **Negation backfires.** Naming the behaviour you do not want makes it more available, not
+  less. State the target instead.
+- **The per-turn rider beats the system prompt.** `TutorClient.ContinueThreadAsync` appends a
+  short rider to the newest user message, which is the least-cached and most salient text in
+  the request. The reveal lock lives there for that reason. When the two disagree, the rider
+  wins — so they must not disagree.
