@@ -1,3 +1,7 @@
+# -- Kept local ------------------------------------------------------------------
+# The walkthrough of the whole codebase. Stays on this machine by request.
+ARCHITECTURE.md
+
 # ── Build output ────────────────────────────────────────────────────────────────
 bin/
 obj/
