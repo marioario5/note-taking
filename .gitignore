@@ -1,0 +1,46 @@
+# ── Build output ────────────────────────────────────────────────────────────────
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+.vs/
+
+# ── Secrets and personal data ───────────────────────────────────────────────────
+# The API key lives in the Windows Credential Manager and the notes database in
+# %LocalAppData%\NoteTaker, so neither is inside this folder — these patterns exist
+# so a copy dropped here for debugging cannot be committed by accident.
+*.db
+*.db-wal
+*.db-shm
+*.db.bak*
+settings.json
+appsettings.*.json
+secrets.json
+*.key
+*.pem
+.env
+.env.*
+
+# ── Diagnostics ─────────────────────────────────────────────────────────────────
+# Ink traces record stroke coordinates from real pages, and the trace-image folder
+# holds captures of what was on screen. Both are the student's own work.
+ink-trace-*.txt
+pen-probe*.txt
+trace-images/
+debug-*.log
+
+# ── Working files ───────────────────────────────────────────────────────────────
+# Prompt backups taken before an edit. Useful while iterating, noise in history.
+scratchpad/
+
+# ── Unrelated to this project ───────────────────────────────────────────────────
+countdown-spain.html
+archive.zip
+
+# ── Editor ──────────────────────────────────────────────────────────────────────
+.cursor/
+.idea/
+*.swp
+.DS_Store

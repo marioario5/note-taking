@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- The Windows 10 TFM gives us the WinRT ink-recognition projection alongside WPF. -->
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>NoteTaker.App</RootNamespace>
+    <AssemblyName>NoteTaker</AssemblyName>
+    <Platforms>ARM64;x64</Platforms>
+    <RuntimeIdentifiers>win-arm64;win-x64</RuntimeIdentifiers>
+    <!-- Surface ARM64: x64-emulated WPF collapses pen/touch to mouse (StylusDeviceId 0). -->
+    <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">ARM64</Platform>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <!--
+    Route pen input through WM_POINTER instead of WPF's legacy WISP stylus stack.
+
+    On this Surface, .NET 8's legacy stack delivers the pen ONLY as promoted mouse — not one
+    StylusDown in an entire writing session — and promotion drops the motion before the first
+    synthetic move, so every stroke opens with a ~55ms dead zone. Fixed in size, so it costs a
+    large glyph its first third and swallows a small one whole: a "3" arrives with its top
+    bowl recorded as a straight line. With this switch the same device reports densely from
+    the first sample.
+
+    Measured on the target machine with three bare probes, no app code involved:
+      .NET Framework WPF, legacy stack ... 303 stylus moves in one stroke, pen works
+      .NET 8 WPF, pointer support on ..... zero stylus events, pen arrives as mouse
+      .NET 8 WPF, legacy stack ........... zero stylus events, pen arrives as mouse
+    So when .NET 8's pen stack is healthy this switch is what makes the pen usable, and when
+    it is not, neither setting helps and the fault is outside the app. Do not read a bad
+    session as evidence against the switch without re-running those probes first.
+  -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="Switch.System.Windows.Input.Stylus.EnablePointerSupport"
+                                    Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The input controls are internal on purpose — nothing outside the app should drive
+         them — but their pure geometry (lasso containment) is exactly the kind of thing that
+         has to be tested rather than eyeballed on a tablet. -->
+    <InternalsVisibleTo Include="NoteTaker.SelfTest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\**\*.png" />
+    <Resource Include="Assets\Fonts\*.ttf" />
+  </ItemGroup>
+
+  <!--
+    The chat's KaTeX rendering lives in a WebView2 control, which maps a real folder on
+    disk to a virtual host at runtime (SetVirtualHostNameToFolderMapping) — unlike the
+    Resource items above, which get compiled into the assembly rather than left as loose
+    files, these need to physically exist under the output directory.
+  -->
+  <ItemGroup>
+    <Content Include="Assets\chat\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
+    <PackageReference Include="PDFtoImage" Version="5.3.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.22.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NoteTaker.Core\NoteTaker.Core.csproj" />
+    <ProjectReference Include="..\NoteTaker.Data\NoteTaker.Data.csproj" />
+    <ProjectReference Include="..\NoteTaker.AI\NoteTaker.AI.csproj" />
+  </ItemGroup>
+
+</Project>

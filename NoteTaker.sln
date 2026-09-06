@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2A2EFBD5-39F0-4DF0-A32D-B9470A29D657}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoteTaker.Core", "src\NoteTaker.Core\NoteTaker.Core.csproj", "{C04272DA-6346-4192-BC1A-FB04938AB583}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoteTaker.Data", "src\NoteTaker.Data\NoteTaker.Data.csproj", "{045B83CF-723D-4FA1-B764-86A7BF457D81}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoteTaker.AI", "src\NoteTaker.AI\NoteTaker.AI.csproj", "{B9360D4E-774F-42B8-A60C-7AE9F3E78797}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoteTaker.App", "src\NoteTaker.App\NoteTaker.App.csproj", "{129145AC-62AB-4F89-AB64-45B85B92E147}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C0E00576-13C9-4030-AE0B-FBF6B6AF640A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoteTaker.SelfTest", "tools\NoteTaker.SelfTest\NoteTaker.SelfTest.csproj", "{29CC2494-69EB-46C5-BE42-E28BCAE2606A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C04272DA-6346-4192-BC1A-FB04938AB583}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C04272DA-6346-4192-BC1A-FB04938AB583}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C04272DA-6346-4192-BC1A-FB04938AB583}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C04272DA-6346-4192-BC1A-FB04938AB583}.Release|Any CPU.Build.0 = Release|Any CPU
+		{045B83CF-723D-4FA1-B764-86A7BF457D81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{045B83CF-723D-4FA1-B764-86A7BF457D81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{045B83CF-723D-4FA1-B764-86A7BF457D81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{045B83CF-723D-4FA1-B764-86A7BF457D81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9360D4E-774F-42B8-A60C-7AE9F3E78797}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9360D4E-774F-42B8-A60C-7AE9F3E78797}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9360D4E-774F-42B8-A60C-7AE9F3E78797}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9360D4E-774F-42B8-A60C-7AE9F3E78797}.Release|Any CPU.Build.0 = Release|Any CPU
+		{129145AC-62AB-4F89-AB64-45B85B92E147}.Debug|Any CPU.ActiveCfg = Debug|ARM64
+		{129145AC-62AB-4F89-AB64-45B85B92E147}.Debug|Any CPU.Build.0 = Debug|ARM64
+		{129145AC-62AB-4F89-AB64-45B85B92E147}.Release|Any CPU.ActiveCfg = Release|ARM64
+		{129145AC-62AB-4F89-AB64-45B85B92E147}.Release|Any CPU.Build.0 = Release|ARM64
+		{29CC2494-69EB-46C5-BE42-E28BCAE2606A}.Debug|Any CPU.ActiveCfg = Debug|ARM64
+		{29CC2494-69EB-46C5-BE42-E28BCAE2606A}.Debug|Any CPU.Build.0 = Debug|ARM64
+		{29CC2494-69EB-46C5-BE42-E28BCAE2606A}.Release|Any CPU.ActiveCfg = Release|ARM64
+		{29CC2494-69EB-46C5-BE42-E28BCAE2606A}.Release|Any CPU.Build.0 = Release|ARM64
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C04272DA-6346-4192-BC1A-FB04938AB583} = {2A2EFBD5-39F0-4DF0-A32D-B9470A29D657}
+		{045B83CF-723D-4FA1-B764-86A7BF457D81} = {2A2EFBD5-39F0-4DF0-A32D-B9470A29D657}
+		{B9360D4E-774F-42B8-A60C-7AE9F3E78797} = {2A2EFBD5-39F0-4DF0-A32D-B9470A29D657}
+		{129145AC-62AB-4F89-AB64-45B85B92E147} = {2A2EFBD5-39F0-4DF0-A32D-B9470A29D657}
+		{29CC2494-69EB-46C5-BE42-E28BCAE2606A} = {C0E00576-13C9-4030-AE0B-FBF6B6AF640A}
+	EndGlobalSection
+EndGlobal

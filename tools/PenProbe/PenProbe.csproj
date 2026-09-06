@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <Platforms>ARM64;x64</Platforms>
+    <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+    <AssemblyName>PenProbe</AssemblyName>
+    <!-- Diagnostic tool, deliberately outside the solution: it must stay runnable even when
+         the app itself will not build. -->
+  </PropertyGroup>
+
+  <!-- The whole point of this probe: same runtime and same switch as the app. -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="Switch.System.Windows.Input.Stylus.EnablePointerSupport"
+                                    Value="true" />
+  </ItemGroup>
+
+</Project>

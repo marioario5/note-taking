@@ -1,0 +1,216 @@
+<!--
+    Ellery design tokens, transcribed from the mockup's _ds/.../tokens/*.css.
+    Colour names and values are kept identical to the CSS custom properties so the two
+    can be diffed by eye.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ── Ink: the pen. Never pure black. ── -->
+    <Color x:Key="Ink900">#FF161E2F</Color>
+    <Color x:Key="Ink800">#FF22293C</Color>
+    <Color x:Key="Ink700">#FF2E3A52</Color>
+    <Color x:Key="Ink500">#FF55617A</Color>
+    <Color x:Key="Ink400">#FF6F7B93</Color>
+    <Color x:Key="Ink300">#FF8A93A6</Color>
+    <Color x:Key="Ink200">#FFB4BBC8</Color>
+
+    <!-- ── Paper: the page. Warm, never white. ── -->
+    <Color x:Key="Paper0">#FFFFFDF7</Color>
+    <Color x:Key="Paper50">#FFFDFAF3</Color>
+    <Color x:Key="Paper100">#FFFBF6EC</Color>
+    <Color x:Key="Paper200">#FFF3EAD9</Color>
+    <Color x:Key="Paper300">#FFE7DAC4</Color>
+    <Color x:Key="Paper400">#FFD8C7AB</Color>
+
+    <!-- ── Night: the margins after lights-out. ── -->
+    <Color x:Key="Night900">#FF1D2C41</Color>
+    <Color x:Key="Night800">#FF22344C</Color>
+    <Color x:Key="Night700">#FF2E4462</Color>
+    <Color x:Key="Night600">#FF3A5678</Color>
+    <Color x:Key="Night500">#FF476A92</Color>
+    <Color x:Key="Night400">#FF6E8DB2</Color>
+
+    <!-- ── Periwinkle: the elephant. ── -->
+    <Color x:Key="Peri600">#FF6B7FB4</Color>
+    <Color x:Key="Peri500">#FF8396C8</Color>
+    <Color x:Key="Peri400">#FFA9B7DE</Color>
+    <Color x:Key="Peri300">#FFC6CFEB</Color>
+    <Color x:Key="Peri100">#FFDDE3F4</Color>
+
+    <!-- ── Star: the one bright thing. ── -->
+    <Color x:Key="Star700">#FFC9822A</Color>
+    <Color x:Key="Star600">#FFE89B2E</Color>
+    <Color x:Key="Star500">#FFFEBB55</Color>
+    <Color x:Key="Star300">#FFFCD894</Color>
+    <Color x:Key="Star100">#FFFDEED2</Color>
+
+    <!-- ── Semantic hues, muted to match the plate ── -->
+    <Color x:Key="Sage600">#FF517A60</Color>
+    <Color x:Key="Sage500">#FF6F9B7D</Color>
+    <Color x:Key="Clay600">#FFA94F3C</Color>
+    <Color x:Key="Clay500">#FFC4614B</Color>
+    <Color x:Key="Dusk500">#FF8A6FA8</Color>
+
+    <!-- Chrome greys the mockup hardcodes outside the token set. -->
+    <Color x:Key="Chrome900">#FF10151F</Color>
+    <Color x:Key="Chrome800">#FF1C2434</Color>
+    <Color x:Key="HeaderTop">#FF262C36</Color>
+    <Color x:Key="HeaderMid">#FF222831</Color>
+    <Color x:Key="HeaderEnd">#FF1F242D</Color>
+    <Color x:Key="GroundTop">#FF252B34</Color>
+    <Color x:Key="GroundMid">#FF1D222A</Color>
+    <Color x:Key="GroundEnd">#FF161A20</Color>
+    <Color x:Key="AsideTop">#FF1E2739</Color>
+    <Color x:Key="AsideEnd">#FF141B29</Color>
+    <Color x:Key="PageInk">#FFECE4D6</Color>
+    <Color x:Key="OnStar">#FF132033</Color>
+    <Color x:Key="MajorMark">#FFE88F74</Color>
+
+    <!-- ── Semantic brushes ── -->
+    <SolidColorBrush x:Key="TextTitle" Color="{StaticResource Paper50}" />
+    <SolidColorBrush x:Key="TextBody" Color="{StaticResource Paper100}" />
+    <SolidColorBrush x:Key="TextMuted" Color="{StaticResource Peri300}" />
+    <SolidColorBrush x:Key="TextFaint" Color="{StaticResource Peri400}" />
+    <SolidColorBrush x:Key="TextOnStar" Color="{StaticResource OnStar}" />
+
+    <!-- The landing screen's outer shell: header and rail. Darker than the pane between them,
+         which is what makes the middle read as the page and the edges as frame. -->
+    <SolidColorBrush x:Key="SurfaceShell" Color="#FF070A11" />
+    <SolidColorBrush x:Key="SurfacePane" Color="{StaticResource Chrome800}" />
+
+    <!-- Clean and unadorned, for screens that are chrome rather than notebook. -->
+    <FontFamily x:Key="FontShell">Segoe UI Variable Text, Segoe UI</FontFamily>
+
+    <SolidColorBrush x:Key="SurfaceChrome" Color="{StaticResource Chrome900}" />
+    <SolidColorBrush x:Key="SurfaceRaised" Color="{StaticResource Chrome800}" />
+    <SolidColorBrush x:Key="SurfaceGlass" Color="#F81C2434" />
+    <SolidColorBrush x:Key="SurfaceSunk" Color="#8C0C111A" />
+    <SolidColorBrush x:Key="SurfaceHover" Color="#1FA9B7DE" />
+    <SolidColorBrush x:Key="SurfaceActive" Color="#24A9B7DE" />
+
+    <SolidColorBrush x:Key="Accent" Color="{StaticResource Star500}" />
+    <SolidColorBrush x:Key="AccentSoft" Color="{StaticResource Star300}" />
+    <SolidColorBrush x:Key="AccentTint" Color="#26FEBB55" />
+    <SolidColorBrush x:Key="AccentTintStrong" Color="#4DFEBB55" />
+    <SolidColorBrush x:Key="Danger" Color="{StaticResource Clay500}" />
+    <SolidColorBrush x:Key="DangerTint" Color="#21C4614B" />
+    <SolidColorBrush x:Key="Success" Color="{StaticResource Sage500}" />
+    <SolidColorBrush x:Key="Info" Color="{StaticResource Peri500}" />
+    <SolidColorBrush x:Key="Major" Color="{StaticResource MajorMark}" />
+    <SolidColorBrush x:Key="Minor" Color="{StaticResource Star500}" />
+
+    <SolidColorBrush x:Key="BorderNight" Color="#2EA9B7DE" />
+    <SolidColorBrush x:Key="BorderNightSoft" Color="#1AA9B7DE" />
+    <SolidColorBrush x:Key="BorderHair" Color="#1A161E2F" />
+    <SolidColorBrush x:Key="ScrollThumb" Color="#26A9B7DE" />
+    <SolidColorBrush x:Key="ScrollThumbHover" Color="#4DA9B7DE" />
+
+    <LinearGradientBrush x:Key="HeaderWash" StartPoint="0,0" EndPoint="1,0.35">
+        <GradientStop Color="{StaticResource HeaderTop}" Offset="0" />
+        <GradientStop Color="{StaticResource HeaderMid}" Offset="0.58" />
+        <GradientStop Color="{StaticResource HeaderEnd}" Offset="1" />
+    </LinearGradientBrush>
+
+    <RadialGradientBrush x:Key="GroundWash" GradientOrigin="0.2,-0.12" Center="0.2,-0.12"
+                         RadiusX="1.25" RadiusY="0.95">
+        <GradientStop Color="{StaticResource GroundTop}" Offset="0" />
+        <GradientStop Color="{StaticResource GroundMid}" Offset="0.46" />
+        <GradientStop Color="{StaticResource GroundEnd}" Offset="1" />
+    </RadialGradientBrush>
+
+    <LinearGradientBrush x:Key="AsideWash" StartPoint="0.85,0" EndPoint="0.15,1">
+        <GradientStop Color="{StaticResource AsideTop}" Offset="0" />
+        <GradientStop Color="{StaticResource AsideEnd}" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="AccentStripe" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource Star500}" Offset="0" />
+        <GradientStop Color="#B3C4614B" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Paper ground, used when a PDF is attached so printed worksheets stay readable. -->
+    <RadialGradientBrush x:Key="PaperWash" GradientOrigin="0.8,0" Center="0.8,0"
+                         RadiusX="1.4" RadiusY="1.0">
+        <GradientStop Color="{StaticResource Paper0}" Offset="0" />
+        <GradientStop Color="{StaticResource Paper50}" Offset="0.55" />
+        <GradientStop Color="{StaticResource Paper100}" Offset="1" />
+    </RadialGradientBrush>
+
+    <!-- ── Texture ── -->
+    <ImageBrush x:Key="GrainBrush" ImageSource="/Assets/grain.png" TileMode="Tile"
+                Viewport="0,0,140,140" ViewportUnits="Absolute" Opacity="0.055"
+                Stretch="None" />
+
+    <!-- Feint ruling: 31px pitch, exactly the mockup's rule-height token. -->
+    <DrawingBrush x:Key="RuleBrushNight" TileMode="Tile" Viewport="0,0,31,31"
+                  ViewportUnits="Absolute" Stretch="None">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing Brush="#16E2E7F0">
+                <GeometryDrawing.Geometry>
+                    <RectangleGeometry Rect="0,30,31,1" />
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <DrawingBrush x:Key="RuleBrushPaper" TileMode="Tile" Viewport="0,0,31,31"
+                  ViewportUnits="Absolute" Stretch="None">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing Brush="{StaticResource BorderHair}">
+                <GeometryDrawing.Geometry>
+                    <RectangleGeometry Rect="0,30,31,1" />
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <!-- ── Type. Petrona for reading, Karla for chrome, Patrick Hand for marginalia,
+             JetBrains Mono for shortcuts and status. Fallbacks keep the app usable
+             if the embedded faces ever fail to load. ── -->
+    <FontFamily x:Key="FontSerif">/Assets/Fonts/#Petrona, Georgia, Palatino Linotype</FontFamily>
+    <FontFamily x:Key="FontUi">/Assets/Fonts/#Karla, Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="FontNote">/Assets/Fonts/#Patrick Hand, Ink Free, Segoe Script</FontFamily>
+    <FontFamily x:Key="FontMono">/Assets/Fonts/#JetBrains Mono, Cascadia Mono, Consolas</FontFamily>
+
+    <!-- A slow, literary ramp; rem values from the CSS resolved at 16px. -->
+    <sys:Double x:Key="TextXs">12</sys:Double>
+    <sys:Double x:Key="TextSm">13</sys:Double>
+    <sys:Double x:Key="TextUi">14</sys:Double>
+    <sys:Double x:Key="TextBase">17</sys:Double>
+    <sys:Double x:Key="TextMd">19</sys:Double>
+    <sys:Double x:Key="TextLg">22</sys:Double>
+    <sys:Double x:Key="TextXl">28</sys:Double>
+    <sys:Double x:Key="Text2Xl">36</sys:Double>
+
+    <!-- ── Radii ── -->
+    <CornerRadius x:Key="RadiusXs">6</CornerRadius>
+    <CornerRadius x:Key="RadiusSm">10</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">14</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">22</CornerRadius>
+    <CornerRadius x:Key="RadiusXl">32</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">999</CornerRadius>
+    <!-- Softly uneven, hand-cut not machined. -->
+    <CornerRadius x:Key="RadiusPlush">22,24,21,25</CornerRadius>
+
+    <!-- ── Elevation. Wide, low-opacity and blue-grey: a stuffed animal on a duvet. ── -->
+    <DropShadowEffect x:Key="ShadowRest" BlurRadius="20" ShadowDepth="4" Direction="270"
+                      Color="#FF22344C" Opacity="0.18" />
+    <DropShadowEffect x:Key="ShadowLift" BlurRadius="38" ShadowDepth="10" Direction="270"
+                      Color="#FF22344C" Opacity="0.28" />
+    <DropShadowEffect x:Key="ShadowFloat" BlurRadius="70" ShadowDepth="20" Direction="270"
+                      Color="#FF22344C" Opacity="0.34" />
+    <DropShadowEffect x:Key="GlowStarSoft" BlurRadius="26" ShadowDepth="0"
+                      Color="{StaticResource Star500}" Opacity="0.28" />
+    <DropShadowEffect x:Key="GlowMoon" BlurRadius="44" ShadowDepth="0"
+                      Color="{StaticResource Peri400}" Opacity="0.28" />
+
+    <!-- ── Motion. Nothing snaps; things drift, settle and breathe. ── -->
+    <Duration x:Key="DurQuick">0:0:0.16</Duration>
+    <Duration x:Key="DurCalm">0:0:0.26</Duration>
+    <Duration x:Key="DurDrift">0:0:0.44</Duration>
+    <CubicEase x:Key="EaseDrift" EasingMode="EaseOut" />
+    <BackEase x:Key="EaseSettle" EasingMode="EaseOut" Amplitude="0.24" />
+
+</ResourceDictionary>

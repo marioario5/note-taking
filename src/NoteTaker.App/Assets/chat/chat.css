@@ -1,0 +1,61 @@
+/* Ellery chat surface — colors transcribed from Theme/Tokens.xaml so this reads as the
+   same app, not an embedded browser. See README's "Design notes (UI)" for the token names. */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  /* Approximates the AsideWash gradient (AsideTop #1E2739 -> AsideEnd #141B29) behind the
+     sidebar. Set directly (not transparent) so there's no white flash while the page loads. */
+  background: linear-gradient(165deg, #1e2739, #141b29);
+  color: #c6cfeb; /* Peri300 / TextMuted */
+  font-family: Georgia, "Times New Roman", serif; /* stand-in for the embedded Petrona face */
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+body {
+  padding: 14px;
+  box-sizing: border-box;
+  min-height: 100vh;
+}
+
+#messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.msg {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.msg-user {
+  align-self: flex-end;
+  max-width: 240px;
+  padding: 9px 13px;
+  border-radius: 14px 14px 5px 14px;
+  background: rgba(169, 183, 222, 0.102); /* #1AA9B7DE */
+  color: #fbf6ec; /* Paper100 / TextBody */
+}
+
+.msg-tutor {
+  align-self: stretch;
+  max-width: 290px;
+  color: #c6cfeb; /* Peri300 / TextMuted */
+}
+
+.msg-tutor:empty::before,
+.msg-user:empty::before {
+  content: "…";
+  opacity: 0.5;
+}
+
+/* KaTeX ships black-on-transparent by default; force it onto the night palette. */
+.katex { color: inherit; font-size: 1.05em; }
+.katex-display { margin: 0.4em 0; }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(169, 183, 222, 0.15); border-radius: 6px; }
+::-webkit-scrollbar-track { background: transparent; }

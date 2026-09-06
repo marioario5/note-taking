@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>NoteTaker.AI</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NoteTaker.Core\NoteTaker.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Prompts live at the repo root so they are easy to review and version on their own. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\prompts\*.md" LogicalName="prompts/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

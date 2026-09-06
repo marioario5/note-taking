@@ -1,0 +1,99 @@
+<UserControl x:Class="NoteTaker.App.Controls.InkPageControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:NoteTaker.App.Controls"
+             Background="{StaticResource GroundWash}">
+    <Grid>
+        <!-- Infinite canvas: camera transform only — no scroll extent, no world edge. -->
+        <Grid x:Name="Viewport"
+              ClipToBounds="True"
+              Background="Transparent"
+              Stylus.IsPressAndHoldEnabled="False"
+              Stylus.IsFlicksEnabled="False"
+              Stylus.IsTapFeedbackEnabled="False"
+              Stylus.IsTouchFeedbackEnabled="False">
+            <Canvas x:Name="CameraHost">
+                <Canvas.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="Zoom" ScaleX="1" ScaleY="1" />
+                        <TranslateTransform x:Name="Pan" />
+                    </TransformGroup>
+                </Canvas.RenderTransform>
+
+                <!-- Writable world = visible paper (same extent). A4/PDF sheet is centered. -->
+                <Grid x:Name="PageRoot"
+                      Background="Transparent"
+                      Stylus.IsPressAndHoldEnabled="False"
+                      Stylus.IsFlicksEnabled="False">
+                    <Rectangle x:Name="InfiniteGround" Fill="{StaticResource GroundWash}"
+                               IsHitTestVisible="False" />
+                    <!-- Starts hidden: Ground defaults to Night, and ApplyGround early-returns
+                         when the ground is unchanged, so this initial value is what the night
+                         ground actually renders. See ApplyGround for why grain is off on night. -->
+                    <Rectangle x:Name="InfiniteGrain" Fill="{StaticResource GrainBrush}"
+                               Opacity="0" IsHitTestVisible="False" />
+                    <Rectangle x:Name="InfiniteRules" Fill="{StaticResource RuleBrushNight}"
+                               Visibility="Collapsed" IsHitTestVisible="False" />
+                    <Rectangle x:Name="RuleLayer" IsHitTestVisible="False"
+                               Fill="{StaticResource RuleBrushNight}" Visibility="Collapsed" />
+                    <Rectangle x:Name="GrainLayer" IsHitTestVisible="False"
+                               Fill="{StaticResource GrainBrush}" Opacity="0" />
+
+                    <Canvas IsHitTestVisible="False">
+                        <Image x:Name="PdfLayer" Stretch="Fill" Width="1240" Height="1754" />
+                    </Canvas>
+
+                    <!-- Pasted pictures sit UNDER the ink so they can be annotated on top.
+                         Not hit-testable: selection is driven by an explicit finger hit-test
+                         in code, because letting these swallow input would break writing
+                         over them with the pen. -->
+                    <Canvas x:Name="ImageLayer" IsHitTestVisible="False" />
+
+                    <!-- Tap/touch feedback off: WPF only honours these once the stylus stack
+                         is actually in use (see the EnablePointerSupport switch in the
+                         csproj), which is why the contact ripple only started showing up
+                         after the pen stopped arriving as promoted mouse. -->
+                    <controls:PenInkCanvas x:Name="Ink" Background="Transparent"
+                                           Stylus.IsPressAndHoldEnabled="False"
+                                           Stylus.IsFlicksEnabled="False"
+                                           Stylus.IsTapFeedbackEnabled="False"
+                                           Stylus.IsTouchFeedbackEnabled="False" />
+                    <Canvas x:Name="HighlightLayer" IsHitTestVisible="False" />
+
+                    <!-- Selection frame + corner grips for the picture being manipulated.
+                         Above the ink so the grips stay grabbable over written-on images. -->
+                    <Canvas x:Name="ImageSelectionLayer" IsHitTestVisible="False" />
+
+                    <!-- Barrel-button lasso: the outline while it is being drawn, and the
+                         frame around whatever it caught. Above the ink so the dashed line
+                         stays readable over dense work, and never hit-testable — the finger
+                         gesture layer decides what a touch means, not this. -->
+                    <Canvas x:Name="LassoLayer" IsHitTestVisible="False">
+                        <Polyline x:Name="LassoPath"
+                                  Stroke="#99C5D0DE"
+                                  StrokeThickness="1.15"
+                                  StrokeDashArray="3.5 2.75"
+                                  Fill="#14FFFFFF"
+                                  Visibility="Collapsed" />
+                    </Canvas>
+                    <Canvas x:Name="LassoSelectionLayer" IsHitTestVisible="False" />
+
+                    <Canvas x:Name="EraserLayer" IsHitTestVisible="False">
+                        <Rectangle x:Name="EraserPreview"
+                                   Visibility="Collapsed"
+                                   Stroke="#99C5D0DE"
+                                   StrokeThickness="1.15"
+                                   StrokeDashArray="3.5 2.75"
+                                   Fill="#14FFFFFF"
+                                   SnapsToDevicePixels="True" />
+                    </Canvas>
+                </Grid>
+            </Canvas>
+        </Grid>
+
+        <!-- The Live-check comet sweep (top edge) and debounce countdown bar (bottom edge)
+             that used to render here were removed: they animated on top of the page on
+             every ink change, which is distracting during active writing. See
+             MainWindow.xaml.cs's OnTutorStatusChanged for the rest of that removal. -->
+    </Grid>
+</UserControl>

@@ -1,0 +1,101 @@
+/* Colours transcribed from Theme/Tokens.xaml, same as chat.css, so the composer reads as
+   part of the app rather than an embedded browser. */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent; /* the WPF Border behind supplies the composer's own surface */
+  color: #fbf6ec; /* Paper100 / TextBody */
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  overflow: hidden;
+}
+
+/* The flex container is body and ONLY body. Putting display:flex on html as well makes body
+   a flex item, and a flex item shrinks to fit its content — an empty math field is about
+   36px wide, so the composer became a sliver in the corner with the whole rest of the strip
+   dead to clicks. Same shrink-to-fit trap as the one #host guards against below, one level
+   further up and far less obvious. */
+body {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Must stretch. As a flex item this wrapper defaults to shrink-to-fit, and an EMPTY math
+   field is only a few pixels wide — so the composer looked full-width but every click
+   outside those few pixels landed on the body and focused nothing. */
+#host {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+math-field {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 12px;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #fbf6ec;
+  font-size: 16px;
+
+  /* MathLive's own custom properties — without these the field keeps its light-theme
+     defaults and the caret is invisible against the night palette. */
+  --caret-color: #f0b458;
+  --selection-background-color: rgba(169, 183, 222, 0.28);
+  --smart-fence-color: #c6cfeb;
+  --placeholder-color: rgba(198, 207, 235, 0.55);
+
+  /* Two different highlights, both wrong here, and they are easy to mistake for each other.
+
+     The first paints behind the group the caret is inside: in a formula editor that frames
+     the sub-expression being edited, but in a chat box the group is the whole message. */
+  --contains-highlight-background-color: transparent;
+
+  /* The second is the one that actually tinted every word blue. MathLive shades text-mode
+     runs so you can see which parts of a formula are prose — useful when prose is the rare
+     inclusion, useless now the field opens in text and the "run" is the entire sentence.
+     Its rule is `.ML__focused .ML__text`, so it only appeared once the box had focus, which
+     is exactly when you are looking at it. */
+  --text-highlight-background-color: transparent;
+}
+
+/* The blue focus ring MathLive draws by default belongs to its own design language. */
+math-field:focus,
+math-field:focus-within {
+  outline: none;
+  box-shadow: none;
+}
+
+/* MathLive puts two buttons inside the field: a virtual-keyboard toggle and a menu. Setting
+   mathVirtualKeyboardPolicy and clearing menuItems stops them doing anything but does NOT
+   hide them, so without this the composer shows two dead blue icons where the student is
+   trying to type. They live in the shadow DOM and are only reachable through ::part. */
+math-field::part(virtual-keyboard-toggle),
+math-field::part(menu-toggle) {
+  display: none;
+}
+
+/* MathLive renders the empty-field prompt itself only inside \placeholder{}; this is the
+   composer-level "nothing typed yet" hint, toggled from composer.js. */
+#placeholder {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: rgba(198, 207, 235, 0.55);
+  font-size: 15px;
+}
+
+#placeholder.hidden {
+  display: none;
+}
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(169, 183, 222, 0.15); border-radius: 6px; }
+::-webkit-scrollbar-track { background: transparent; }

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<!--
+  Everything here is loaded from a virtual host mapped to a local folder
+  (SetVirtualHostNameToFolderMapping in MainWindow.xaml.cs) — no CDN, no network
+  dependency for rendering. See README's "Fixes landed" for why: this app is
+  offline-first, and math rendering shouldn't be the one thing that needs a connection.
+-->
+<link rel="stylesheet" href="katex/katex.min.css" />
+<link rel="stylesheet" href="chat.css" />
+</head>
+<body>
+<div id="messages"></div>
+<script src="katex/katex.min.js"></script>
+<script src="katex/auto-render.min.js"></script>
+<script src="math-render.js"></script>
+<script src="chat.js"></script>
+</body>
+</html>

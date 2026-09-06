@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>NoteTaker.ReportProbe</RootNamespace>
+    <Platforms>ARM64;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\NoteTaker.Core\NoteTaker.Core.csproj" />
+    <ProjectReference Include="..\..\src\NoteTaker.Data\NoteTaker.Data.csproj" />
+    <ProjectReference Include="..\..\src\NoteTaker.AI\NoteTaker.AI.csproj" />
+    <ProjectReference Include="..\..\src\NoteTaker.App\NoteTaker.App.csproj" />
+  </ItemGroup>
+
+</Project>

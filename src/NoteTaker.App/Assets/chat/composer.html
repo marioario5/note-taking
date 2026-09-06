@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<!--
+  The chat composer. Separate page from chat.html on purpose: that page owns the streamed
+  transcript, which rewrites its own DOM mid-stream, and an editable field living inside that
+  would be at the mercy of it. Same mapped folder, so both are still offline-only with no CDN —
+  mathlive.min.js and its fonts are vendored next to this file.
+-->
+<link rel="stylesheet" href="composer.css" />
+</head>
+<body>
+<div id="host"></div>
+<div id="placeholder">Ask him something</div>
+<script src="mathlive/mathlive.min.js"></script>
+<script src="composer.js"></script>
+</body>
+</html>

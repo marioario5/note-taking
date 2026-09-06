@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <!-- WPF is referenced so ISF round-trips and page rendering are exercised against
+         the exact types the app uses. -->
+    <UseWPF>true</UseWPF>
+    <RootNamespace>NoteTaker.SelfTest</RootNamespace>
+    <Platforms>ARM64;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\NoteTaker.Core\NoteTaker.Core.csproj" />
+    <ProjectReference Include="..\..\src\NoteTaker.Data\NoteTaker.Data.csproj" />
+    <ProjectReference Include="..\..\src\NoteTaker.AI\NoteTaker.AI.csproj" />
+    <ProjectReference Include="..\..\src\NoteTaker.App\NoteTaker.App.csproj" />
+  </ItemGroup>
+
+</Project>

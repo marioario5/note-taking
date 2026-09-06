@@ -1,0 +1,1304 @@
+<!--
+    Ellery control templates. Two rules from the design system drive almost everything here:
+    focus is an amber ring and never a blue system ring, and "active" is an amber accent plus
+    a faint tint rather than a solid fill.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:NoteTaker.App.Controls">
+
+    <!-- ══ Focus ══ -->
+    <Style x:Key="FocusRing">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border CornerRadius="{StaticResource RadiusXs}"
+                            BorderBrush="{StaticResource AccentTintStrong}"
+                            BorderThickness="2" Margin="-2" SnapsToDevicePixels="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Text ══ -->
+    <Style TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+    </Style>
+
+    <Style x:Key="Caption" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextXs}" />
+        <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+    </Style>
+
+    <!-- The only uppercase in the system: the tracked micro-label. -->
+    <Style x:Key="MicroLabel" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+    </Style>
+
+    <Style x:Key="SectionHeader" TargetType="TextBlock" BasedOn="{StaticResource MicroLabel}">
+        <Setter Property="Margin" Value="12,12,12,6" />
+    </Style>
+
+    <!-- Headings are Regular weight, not Bold; the size does the work. -->
+    <Style x:Key="Title" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource FontSerif}" />
+        <Setter Property="FontSize" Value="{StaticResource TextLg}" />
+        <Setter Property="Foreground" Value="{StaticResource TextTitle}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    </Style>
+
+    <Style x:Key="Subtitle" TargetType="TextBlock" BasedOn="{StaticResource Title}">
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+
+    <Style x:Key="Body" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource FontSerif}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="LineHeight" Value="22" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    </Style>
+
+    <!-- Marginalia: the one place a little warmth is allowed, through the hand of the type. -->
+    <Style x:Key="Marginalia" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource FontNote}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    </Style>
+
+    <Style x:Key="Mono" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource FontMono}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+    </Style>
+
+    <Style TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="Padding" Value="0,0,0,4" />
+    </Style>
+
+    <!-- ══ Buttons ══ -->
+    <Style TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                    <!-- RadiusSm, not RadiusPill. A 999px radius turns any button wider than
+                         it is tall into a stadium, and the hover fill behind a label like
+                         "Import syllabus…" then reads as a flattened oval. The segmented
+                         RadioButtons keep the pill because they are short and fixed-height,
+                         which is the shape a pill is actually for. IconButton already used
+                         RadiusSm, so this makes the family agree. -->
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Shell" Background="{TemplateBinding Background}"
+                            CornerRadius="{StaticResource RadiusSm}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Hover lifts 1px and warms the fill; it never just changes opacity. -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+                            <Setter TargetName="Shell" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform Y="-1" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Shell" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform Y="0" />
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceActive}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="#6BA9B7DE" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A full-width row that reads as a list entry: same pill fill and hover as any button,
+         but its label starts at the left edge where the eye scans for it. The base template
+         centres its ContentPresenter and ignores HorizontalContentAlignment, so a row style
+         has to restate the template rather than set a property. -->
+    <Style x:Key="RowButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Shell" Background="{TemplateBinding Background}"
+                            CornerRadius="{StaticResource RadiusSm}">
+                        <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceActive}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A card you click. Carries a border and a filled surface, so it reads as an object with
+         edges rather than a line of text that happens to respond — the weight is the point when
+         the click decides where a term's work gets filed. -->
+    <Style x:Key="CardButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Shell" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource RadiusSm}">
+                        <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceActive}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Amber is rationed: one primary per view. -->
+    <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{StaticResource Accent}" />
+        <Setter Property="Foreground" Value="{StaticResource TextOnStar}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="22,0" />
+        <Setter Property="Effect" Value="{StaticResource GlowStarSoft}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Shell" Background="{TemplateBinding Background}"
+                            CornerRadius="{StaticResource RadiusSm}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource AccentSoft}" />
+                            <Setter TargetName="Shell" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform Y="-1" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Shell" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform Y="0" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceActive}" />
+                            <Setter Property="Foreground" Value="#6BA9B7DE" />
+                            <Setter Property="Effect" Value="{x:Null}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="AccentGhostButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{StaticResource AccentTint}" />
+        <Setter Property="Foreground" Value="{StaticResource AccentSoft}" />
+        <Setter Property="MinHeight" Value="30" />
+    </Style>
+
+    <!-- 32x26 chrome icon button, as in the mockup's header. -->
+    <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Shell" Background="{TemplateBinding Background}"
+                            CornerRadius="{StaticResource RadiusSm}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceActive}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 36px circular send button. -->
+    <Style x:Key="SendButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="{StaticResource Accent}" />
+        <Setter Property="Foreground" Value="{StaticResource TextOnStar}" />
+        <Setter Property="Effect" Value="{StaticResource GlowStarSoft}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Shell" Background="{TemplateBinding Background}"
+                            CornerRadius="18">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource AccentSoft}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceActive}" />
+                            <Setter Property="Effect" Value="{x:Null}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="CaptionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Width" Value="44" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+        <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Shell" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextTitle}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="CloseButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource Danger}" />
+                <Setter Property="Foreground" Value="{StaticResource TextTitle}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ══ Radio buttons: segmented pills and tool toggles ══ -->
+    <Style TargetType="RadioButton">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Shell" Background="Transparent"
+                            CornerRadius="{StaticResource RadiusPill}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource Accent}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextOnStar}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The track the mode segments sit in. Mockup: padding 3, gap 3, pill radius, a
+         rgba(12,17,26,.55) fill and a 1px rgba(169,183,222,.13) inset ring.
+         Outer height is 24 (segment) + 3 + 3 (padding) + 1 + 1 (ring) = 32, so the radius
+         is an exact 16 rather than the 999 pill token — a literal 999 leaves WPF to clamp
+         it, which was rendering as a squashed lens instead of a true stadium.
+         Right padding is 0 because each segment carries a 3px right margin (see
+         SegmentButton), which supplies the final gap and keeps all four gaps equal. -->
+    <Style x:Key="SegmentTrack" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SurfaceSunk}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderNightSoft}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="3,3,0,3" />
+    </Style>
+
+    <!-- One mode segment. Mockup: height 24, padding 0 12, gap 3, 12.5px/500, pill. -->
+    <Style x:Key="SegmentButton" TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
+        <Setter Property="Height" Value="24" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Margin" Value="0,0,3,0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <!-- Exact half of the 24px height: a true stadium, not a clamped 999. -->
+                    <Border x:Name="Shell" Background="Transparent" CornerRadius="12">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource Accent}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextOnStar}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ToolToggle" TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Shell" Background="Transparent"
+                            CornerRadius="{StaticResource RadiusSm}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource AccentTint}" />
+                            <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 15px ink swatch with the amber double ring when selected. -->
+    <Style x:Key="SwatchToggle" TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid Background="Transparent">
+                        <Ellipse x:Name="Ring" Width="22" Height="22" Stroke="{StaticResource Accent}"
+                                 StrokeThickness="2" Visibility="Collapsed" />
+                        <Ellipse x:Name="Dot" Width="15" Height="15"
+                                 Fill="{TemplateBinding Background}"
+                                 Stroke="#59A9B7DE" StrokeThickness="1" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Ring" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Dot" Property="Stroke" Value="{StaticResource TextMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Toggle buttons ══ -->
+    <Style TargetType="ToggleButton">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Shell" Background="Transparent"
+                            CornerRadius="{StaticResource RadiusSm}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource AccentTint}" />
+                            <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Text fields ══ -->
+    <Style TargetType="TextBox">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="CaretBrush" Value="{StaticResource Accent}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource Accent}" />
+        <Setter Property="SelectionOpacity" Value="0.35" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Shell" Background="{StaticResource SurfaceSunk}"
+                            BorderBrush="{StaticResource BorderNightSoft}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource RadiusSm}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center"
+                                      Focusable="False" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="BorderBrush"
+                                    Value="{StaticResource BorderNight}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Shell" Property="BorderBrush"
+                                    Value="{StaticResource AccentTintStrong}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="PasswordBox" BasedOn="{x:Null}">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="CaretBrush" Value="{StaticResource Accent}" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Border x:Name="Shell" Background="{StaticResource SurfaceSunk}"
+                            BorderBrush="{StaticResource BorderNightSoft}" BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSm}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center" Focusable="False" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Shell" Property="BorderBrush"
+                                    Value="{StaticResource AccentTintStrong}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Check boxes ══ -->
+    <Style TargetType="CheckBox">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="9,0,0,0" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="Box" Width="18" Height="18"
+                                Background="{StaticResource SurfaceSunk}"
+                                BorderBrush="{StaticResource BorderNight}" BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusXs}"
+                                VerticalAlignment="Center">
+                            <c:Icon x:Name="Tick" Geometry="{StaticResource IconCheck}"
+                                    Width="12" Height="12" Thickness="3"
+                                    Foreground="{StaticResource TextOnStar}"
+                                    Visibility="Collapsed" />
+                        </Border>
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center" RecognizesAccessKey="True" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Box" Property="Background" Value="{StaticResource Accent}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource Accent}" />
+                            <Setter TargetName="Tick" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush"
+                                    Value="{StaticResource AccentTintStrong}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Combo box ══ -->
+    <Style x:Key="ComboToggle" TargetType="ToggleButton">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="Auto" />
+        <Setter Property="Height" Value="Auto" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Shell" Background="{StaticResource SurfaceSunk}"
+                            BorderBrush="{StaticResource BorderNightSoft}" BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSm}">
+                        <Path x:Name="Arrow" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Margin="0,0,12,0" Data="M0,0 L4,4 L8,0"
+                              Stroke="{StaticResource TextFaint}" StrokeThickness="1.6"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="BorderBrush"
+                                    Value="{StaticResource BorderNight}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Shell" Property="BorderBrush"
+                                    Value="{StaticResource AccentTintStrong}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBox">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton Style="{StaticResource ComboToggle}"
+                                      Focusable="False" ClickMode="Press"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
+                                                  RelativeSource={RelativeSource TemplatedParent}}" />
+                        <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center" HorizontalAlignment="Left" />
+                        <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True"
+                               Focusable="False" PopupAnimation="Fade"
+                               IsOpen="{TemplateBinding IsDropDownOpen}">
+                            <Border Margin="0,4,0,0" Padding="6"
+                                    Background="{StaticResource SurfaceGlass}"
+                                    BorderBrush="{StaticResource BorderNight}" BorderThickness="1"
+                                    CornerRadius="{StaticResource RadiusMd}"
+                                    MinWidth="{TemplateBinding ActualWidth}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    Effect="{StaticResource ShadowFloat}">
+                                <ScrollViewer>
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Shell" Background="Transparent"
+                            CornerRadius="{StaticResource RadiusXs}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource AccentTint}" />
+                            <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Slider ══ -->
+    <Style x:Key="SliderThumb" TargetType="Thumb">
+        <Setter Property="Height" Value="14" />
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Ellipse Fill="{StaticResource TextTitle}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Slider">
+        <Setter Property="Height" Value="22" />
+        <Setter Property="MinWidth" Value="60" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid VerticalAlignment="Center">
+                        <Border Height="4" CornerRadius="2" VerticalAlignment="Center"
+                                Background="{StaticResource SurfaceSunk}"
+                                BorderBrush="{StaticResource BorderNightSoft}" BorderThickness="1" />
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge" Opacity="0"
+                                              Focusable="False" Height="12" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource SliderThumb}" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="Slider.IncreaseLarge" Opacity="0"
+                                              Focusable="False" Height="12" />
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Scroll bars: 9px, periwinkle at 15% ══ -->
+    <Style x:Key="ScrollThumbStyle" TargetType="Thumb">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border x:Name="Shell" Background="{StaticResource ScrollThumb}"
+                            CornerRadius="5" Margin="2" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource ScrollThumbHover}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Width" Value="10" />
+        <Setter Property="MinWidth" Value="10" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="{TemplateBinding Background}">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0"
+                                              Focusable="False" Width="10" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource ScrollThumbStyle}" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0"
+                                              Focusable="False" Width="10" />
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="Height" Value="10" />
+                <Setter Property="MinHeight" Value="10" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Grid Background="{TemplateBinding Background}">
+                                <Track x:Name="PART_Track">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageLeftCommand" Opacity="0"
+                                                      Focusable="False" Height="10" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource ScrollThumbStyle}" />
+                                    </Track.Thumb>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageRightCommand" Opacity="0"
+                                                      Focusable="False" Height="10" />
+                                    </Track.IncreaseRepeatButton>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ══ Tree view ══ -->
+    <Style x:Key="TreeExpander" TargetType="ToggleButton">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border Background="Transparent">
+                        <c:Icon x:Name="Chevron" Geometry="{StaticResource IconChevronRight}"
+                                Width="12" Height="12" Thickness="2.4"
+                                Foreground="{StaticResource TextFaint}"
+                                RenderTransformOrigin="0.5,0.5" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Chevron" Property="RenderTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="90" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chevron" Property="Foreground"
+                                    Value="{StaticResource TextTitle}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="TreeViewItem">
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Padding" Value="2" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TreeViewItem">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Border x:Name="Row" Grid.Row="0" Background="Transparent"
+                                CornerRadius="{StaticResource RadiusXs}" Padding="4,3" Margin="0,1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="18" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ToggleButton x:Name="Expander" Grid.Column="0"
+                                              Style="{StaticResource TreeExpander}"
+                                              ClickMode="Press"
+                                              IsChecked="{Binding IsExpanded, Mode=TwoWay,
+                                                          RelativeSource={RelativeSource TemplatedParent}}" />
+                                <Border x:Name="Accent" Grid.Column="1" Background="Transparent">
+                                    <ContentPresenter x:Name="PART_Header" Grid.Column="1"
+                                                      ContentSource="Header"
+                                                      HorizontalAlignment="Left"
+                                                      VerticalAlignment="Center" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                        <ItemsPresenter x:Name="ItemsHost" Grid.Row="1" Margin="14,0,0,0" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="False">
+                            <Setter TargetName="ItemsHost" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter TargetName="Expander" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Row" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                        </Trigger>
+                        <!-- Selected is an amber accent plus a faint tint, never a solid fill. -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Row" Property="Background"
+                                    Value="{StaticResource AccentTint}" />
+                            <Setter Property="Foreground" Value="{StaticResource AccentSoft}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="TreeView">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+    </Style>
+
+    <!-- ══ List box ══ -->
+    <Style TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+
+    <Style TargetType="ListBoxItem">
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Shell" Background="Transparent"
+                            CornerRadius="{StaticResource RadiusXs}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Stretch" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource SurfaceHover}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource AccentTint}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Menus: night pills on top, dark glass below ══ -->
+    <Style x:Key="MenuSeparator" TargetType="Separator">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Margin" Value="9,5" />
+        <Setter Property="Background" Value="{StaticResource BorderNightSoft}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Height="1" Background="{TemplateBinding Background}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Separator" BasedOn="{StaticResource MenuSeparator}" />
+
+    <ControlTemplate x:Key="TopLevelMenuItem" TargetType="MenuItem">
+        <Grid>
+            <Border x:Name="Shell" Background="Transparent"
+                    CornerRadius="{StaticResource RadiusPill}" Padding="9,4">
+                <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"
+                                  VerticalAlignment="Center" />
+            </Border>
+            <Popup x:Name="PART_Popup" AllowsTransparency="True" Focusable="False"
+                   Placement="Bottom" VerticalOffset="5" PopupAnimation="Fade"
+                   IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                <Border Padding="7" MinWidth="232"
+                        Background="{StaticResource SurfaceGlass}"
+                        BorderBrush="{StaticResource BorderNight}" BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusMd}"
+                        Effect="{StaticResource ShadowFloat}">
+                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                </Border>
+            </Popup>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Shell" Property="Background" Value="{StaticResource SurfaceHover}" />
+            </Trigger>
+            <Trigger Property="IsSubmenuOpen" Value="True">
+                <Setter TargetName="Shell" Property="Background" Value="{StaticResource SurfaceActive}" />
+                <Setter Property="Foreground" Value="{StaticResource TextTitle}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="SubMenuItem" TargetType="MenuItem">
+        <Border x:Name="Shell" Background="Transparent"
+                CornerRadius="{StaticResource RadiusXs}" Padding="11,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="17" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <c:Icon x:Name="Tick" Grid.Column="0" Geometry="{StaticResource IconCheck}"
+                        Width="13" Height="13" Thickness="2.6"
+                        Foreground="{StaticResource Accent}" Visibility="Collapsed"
+                        HorizontalAlignment="Left" />
+                <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True"
+                                  VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}"
+                           Style="{StaticResource Mono}" FontSize="10.5"
+                           Foreground="{StaticResource Info}" Margin="18,0,0,0"
+                           VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+                <Setter TargetName="Shell" Property="Background" Value="{StaticResource SurfaceHover}" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Tick" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="#6BA9B7DE" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="SubMenuHeader" TargetType="MenuItem">
+        <Grid>
+            <Border x:Name="Shell" Background="Transparent"
+                    CornerRadius="{StaticResource RadiusXs}" Padding="11,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="17" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True"
+                                      VerticalAlignment="Center" />
+                    <c:Icon Grid.Column="2" Geometry="{StaticResource IconChevronRight}"
+                            Width="12" Height="12" Margin="18,0,0,0"
+                            Foreground="{StaticResource TextFaint}" />
+                </Grid>
+            </Border>
+            <Popup x:Name="PART_Popup" AllowsTransparency="True" Focusable="False"
+                   Placement="Right" HorizontalOffset="4" PopupAnimation="Fade"
+                   IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                <Border Padding="7" MinWidth="200"
+                        Background="{StaticResource SurfaceGlass}"
+                        BorderBrush="{StaticResource BorderNight}" BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusMd}"
+                        Effect="{StaticResource ShadowFloat}">
+                    <StackPanel IsItemsHost="True" />
+                </Border>
+            </Popup>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+                <Setter TargetName="Shell" Property="Background" Value="{StaticResource SurfaceHover}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style TargetType="MenuItem">
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <!-- Mockup's flyout rows are 12.5px (Tutor App.dc.html's menu-row spans). -->
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template" Value="{StaticResource SubMenuItem}" />
+        <Style.Triggers>
+            <Trigger Property="Role" Value="TopLevelHeader">
+                <Setter Property="Template" Value="{StaticResource TopLevelMenuItem}" />
+                <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+                <!-- Mockup's top-level pill buttons are 11.5px. -->
+                <Setter Property="FontSize" Value="11.5" />
+            </Trigger>
+            <Trigger Property="Role" Value="TopLevelItem">
+                <Setter Property="Template" Value="{StaticResource TopLevelMenuItem}" />
+                <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+                <Setter Property="FontSize" Value="11.5" />
+            </Trigger>
+            <Trigger Property="Role" Value="SubmenuHeader">
+                <Setter Property="Template" Value="{StaticResource SubMenuHeader}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="Menu">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Menu">
+                    <ItemsPresenter />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ContextMenu">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Padding="7" MinWidth="180"
+                            Background="{StaticResource SurfaceGlass}"
+                            BorderBrush="{StaticResource BorderNight}" BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusMd}"
+                            Effect="{StaticResource ShadowFloat}">
+                        <StackPanel IsItemsHost="True" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Tooltip ══ -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextXs}" />
+        <Setter Property="HasDropShadow" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{StaticResource SurfaceGlass}"
+                            BorderBrush="{StaticResource BorderNight}" BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSm}" Padding="10,7"
+                            MaxWidth="280" Effect="{StaticResource ShadowLift}">
+                        <ContentPresenter />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Splitters ══ -->
+    <Style TargetType="GridSplitter">
+        <Setter Property="Background" Value="{StaticResource BorderNightSoft}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GridSplitter">
+                    <Border x:Name="Shell" Background="{TemplateBinding Background}" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Shell" Property="Background"
+                                    Value="{StaticResource AccentTintStrong}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Progress ══ -->
+    <Style TargetType="ProgressBar">
+        <Setter Property="Height" Value="5" />
+        <Setter Property="Foreground" Value="{StaticResource Accent}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Border Background="{StaticResource SurfaceSunk}" CornerRadius="3"
+                            BorderBrush="{StaticResource BorderNightSoft}" BorderThickness="1">
+                        <Grid>
+                            <Rectangle x:Name="PART_Track" />
+                            <Rectangle x:Name="PART_Indicator" HorizontalAlignment="Left"
+                                       RadiusX="3" RadiusY="3"
+                                       Fill="{TemplateBinding Foreground}" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══ Dialog windows ══ -->
+    <Style x:Key="ElleryWindowStyle" TargetType="Window">
+        <Setter Property="Background" Value="{StaticResource SurfaceRaised}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+        <Setter Property="FontFamily" Value="{StaticResource FontUi}" />
+        <Setter Property="FontSize" Value="{StaticResource TextSm}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+    </Style>
+
+    <!-- The footer pattern every dialog uses: ghost dismiss, one amber primary. -->
+    <Style x:Key="DialogFooter" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SurfaceSunk}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderNightSoft}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="Padding" Value="20,14" />
+    </Style>
+
+    <Style x:Key="Card" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SurfaceSunk}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderNightSoft}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusPlush}" />
+        <Setter Property="Padding" Value="18" />
+    </Style>
+
+    <!-- Review's confidence meter. The stock ProgressBar template layers a gloss overlay over
+         the indicator, which reads as a fourth colour beside the meter's three deliberate ones
+         (weak / middling / strong). Stripped back to a track and a fill. -->
+    <Style x:Key="Meter" TargetType="ProgressBar">
+        <Setter Property="Height" Value="5" />
+        <Setter Property="Maximum" Value="1" />
+        <Setter Property="Background" Value="{StaticResource SurfaceSunk}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="3" ClipToBounds="True">
+                        <Grid>
+                            <Rectangle x:Name="PART_Track" />
+                            <Rectangle x:Name="PART_Indicator" HorizontalAlignment="Left"
+                                       RadiusX="3" RadiusY="3"
+                                       Fill="{TemplateBinding Foreground}" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
