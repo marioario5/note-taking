@@ -134,6 +134,18 @@ internal static class InkTrace
 
     public static bool IsRecording => _enabled;
 
+    /// <summary>
+    /// Whether a stroke's coordinates would actually be kept if handed over.
+    /// </summary>
+    /// <remarks>
+    /// Asked BEFORE the caller copies the points. The geometry buffer stops at
+    /// <see cref="MaxGeometryStrokes"/>, and until this existed every stroke past that limit
+    /// still built a full <c>List&lt;Point&gt;</c> from its packets for <see cref="LogGeometry"/>
+    /// to drop on the floor — an allocation per stroke, on the pen path, for a buffer that had
+    /// been full since the four-hundredth stroke of the session.
+    /// </remarks>
+    public static bool WantsGeometry => _enabled && Geometry.Count < MaxGeometryStrokes;
+
     // ── Stroke geometry ────────────────────────────────────────────────────────────────
     // Point counts and bounding boxes cannot answer the only question that matters when a
     // glyph renders wrong: was the SHAPE captured? A "3" and an arc can have identical point
@@ -617,6 +629,9 @@ internal static class InkTrace
     private static volatile bool _autosaveRunning;
     private static long _lastAutosaved = -1;
 
+    /// <summary>Set to end the autosave wait early, so shutdown does not sit out an interval.</summary>
+    private static readonly ManualResetEventSlim AutosaveStop = new(false);
+
     /// <summary>How often the buffer is copied to disk.</summary>
     private static readonly TimeSpan AutosaveInterval = TimeSpan.FromSeconds(60);
 
@@ -648,18 +663,20 @@ internal static class InkTrace
 
     private static void AutosaveLoop()
     {
+        // Waits on a handle rather than sleeping in one-second slices. The slices were there so
+        // shutdown would not sit out a whole interval, and they cost sixty wakes a minute for
+        // the whole life of the app to do nothing fifty-nine of them — which on a tablet keeps
+        // the CPU out of its deeper idle states for a diagnostic that writes once a minute.
+        // Signalling the handle ends the wait immediately and gets the same prompt shutdown for
+        // one wake an interval.
         while (_autosaveRunning)
         {
-            // Slept in slices so shutdown does not wait out a whole interval.
-            for (var i = 0; i < AutosaveInterval.TotalSeconds && _autosaveRunning; i++)
+            if (AutosaveStop.Wait(AutosaveInterval))
             {
-                Thread.Sleep(1000);
+                return;
             }
 
-            if (_autosaveRunning)
-            {
-                WriteAutosave();
-            }
+            WriteAutosave();
         }
     }
 
@@ -703,6 +720,7 @@ internal static class InkTrace
     public static void StopAutosave()
     {
         _autosaveRunning = false;
+        AutosaveStop.Set();
         _autosave = null;
         WriteAutosave();
     }

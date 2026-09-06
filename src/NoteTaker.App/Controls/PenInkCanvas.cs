@@ -1022,7 +1022,7 @@ public sealed class PenInkCanvas : InkCanvas
         // were discarded and not say WHERE any of them was, so "ink is unreliable at the top of
         // the screen" could not be checked against it at all — the one question the geometry
         // exists to answer.
-        if (InkTrace.IsRecording)
+        if (InkTrace.WantsGeometry)
         {
             InkTrace.LogGeometry(e.Stroke.StylusPoints.Select(p => p.ToPoint()).ToList(), drop);
         }
