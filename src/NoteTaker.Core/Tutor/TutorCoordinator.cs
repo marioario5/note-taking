@@ -47,6 +47,9 @@ public sealed class TutorCoordinator : IDisposable
     private long _lastImageThreadId;
     private byte[]? _lastImageHash;
 
+    /// <summary>The most recent Shift+R verdict, and the page it judged.</summary>
+    private (long PageId, SkillVerdict Verdict)? _lastMark;
+
     private readonly object _gate = new();
     private CancellationTokenSource? _debounceCts;
     private long _pendingPageId;
@@ -582,6 +585,21 @@ public sealed class TutorCoordinator : IDisposable
             crop = null;
         }
 
+        // A mark made on this page moments ago is context the next question should have: the
+        // student's "is this right?" has already been answered once, and without this the tutor
+        // pays to work the same page out again from scratch. Consumed on use, so it colours the
+        // turn that follows the mark and no others.
+        if (_lastMark is { } mark && mark.PageId == pageId)
+        {
+            _lastMark = null;
+            question +=
+                $"\n\n(A marking pass just judged this page: {mark.Verdict.Skill}, "
+                + $"{mark.Verdict.Outcome.ToString().ToLowerInvariant()}"
+                + (string.IsNullOrWhiteSpace(mark.Verdict.Reason)
+                    ? ").)"
+                    : $" — {mark.Verdict.Reason}.)");
+        }
+
         var historyTurns = history.Count(m => m.Role == MessageRole.User) + 1;
         var userTurns = ladderTurn ?? historyTurns;
 
@@ -688,6 +706,12 @@ public sealed class TutorCoordinator : IDisposable
                 CreatedAt = _clock.UtcNow,
             },
             ct).ConfigureAwait(false);
+
+        // Handed to the next chat turn on this page. The model cannot carry its reasoning from
+        // one request to the next — thinking tokens are internal to the call that produced them
+        // and there is no API to replay them — but the CONCLUSION of that reasoning is this tag,
+        // and passing it forward saves the tutor re-deriving a diagnosis that was just paid for.
+        _lastMark = (pageId, verdict);
 
         RaiseStatus(new TutorStatus($"Recorded: {verdict.Skill} — {verdict.Outcome.ToString().ToLowerInvariant()}"));
         return verdict;

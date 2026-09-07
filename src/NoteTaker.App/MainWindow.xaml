@@ -862,6 +862,28 @@
                      toolbar above stay live — which is what keeps Home a toggle, not a trap. -->
                 <Grid x:Name="HomeHost" Grid.Column="0" Grid.ColumnSpan="5"
                       Background="{StaticResource SurfaceChrome}" Visibility="Collapsed" />
+
+                <!-- Marking toast. Top right, over everything, ignoring the mouse: it reports
+                     something you already asked for, so it must never be in the way of the next
+                     stroke. Shift+R spends money and used to say so only in 10pt mono in the
+                     corner of the status bar, which is not an answer to "is this right?". -->
+                <Border x:Name="Toast" Grid.Column="0" Grid.ColumnSpan="5"
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Margin="0,16,20,0" Padding="16,11"
+                        MaxWidth="330" Opacity="0" IsHitTestVisible="False"
+                        Background="{StaticResource SurfaceGlass}"
+                        BorderBrush="{StaticResource BorderNight}" BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusSm}"
+                        Effect="{StaticResource ShadowLift}">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="ToastSlide" Y="-10" />
+                    </Border.RenderTransform>
+                    <StackPanel>
+                        <TextBlock x:Name="ToastVerdict" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock x:Name="ToastDetail" Style="{StaticResource Caption}"
+                                   Margin="0,4,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
             </Grid>
         </DockPanel>
     </Border>

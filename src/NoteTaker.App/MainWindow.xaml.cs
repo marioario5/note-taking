@@ -1469,6 +1469,16 @@ public partial class MainWindow : Window, IActivePageSource
     /// <summary>Guards Shift+R against a second press while the first mark is still in flight.</summary>
     private bool _markInFlight;
 
+    /// <summary>How long a marking toast stays up before it fades.</summary>
+    private static readonly TimeSpan ToastLife = TimeSpan.FromSeconds(4.5);
+
+    private DispatcherTimer? _toastTimer;
+    private DateTime _toastUntil;
+
+    /// <summary>The budget day the typical-day watch is currently following.</summary>
+    private DateTimeOffset _typicalDayFor;
+    private decimal _spentAtLastCheck;
+
     /// <summary>Guards the report button against a second press while one is being written.</summary>
     private bool _reportInFlight;
 
@@ -1971,6 +1981,7 @@ public partial class MainWindow : Window, IActivePageSource
 
         UsageStatus.Text = $"budget {fraction * 100:0}%";
         _overBudget = fraction >= 1;
+        WarnIfPastATypicalDay(summary.Cost, budget, now);
         UpdateNotices();
         await RefreshStreakAsync();
     }
@@ -2768,7 +2779,23 @@ public partial class MainWindow : Window, IActivePageSource
             // Saved first: the mark is about the ink as it stands, and an unsaved stroke would
             // be judged and then not be there when Review came looking for the page.
             await SaveCurrentPageAsync();
-            await _tutor.RecordAttemptAsync(_currentPage.Id, _currentPage.SectionId);
+
+            ShowToast("Marking…", "reading the page");
+            var verdict = await _tutor.RecordAttemptAsync(_currentPage.Id, _currentPage.SectionId);
+
+            ShowToast(
+                verdict?.Outcome switch
+                {
+                    SkillOutcome.Right => "Correct",
+                    SkillOutcome.Wrong => "Not right",
+                    SkillOutcome.Unclear => "Couldn't tell",
+                    _ => "Nothing to mark",
+                },
+                verdict is null
+                    ? "no finished attempt found on this page"
+                    : $"{verdict.Skill} · {verdict.Reason}",
+                verdict?.Outcome);
+
             await UpdateUsageAsync();
             await RefreshReviewAsync();
         }
@@ -2776,6 +2803,121 @@ public partial class MainWindow : Window, IActivePageSource
         {
             _markInFlight = false;
         }
+    }
+
+    /// <summary>
+    /// Says so, once, the moment today's spending passes what a flat month would allow a day.
+    /// </summary>
+    /// <remarks>
+    /// Not a limit — the tutor keeps working, and today's real ceiling may be far higher because
+    /// the days you skipped fed into it. It is perspective. On the last day of a quiet month the
+    /// ceiling is most of the cap, and without a marker there is nothing at all between a normal
+    /// afternoon and spending eight dollars in one sitting because the arithmetic allowed it.
+    ///
+    /// Fires once per session per day: on the crossing itself, or immediately if the day was
+    /// already past the mark when the app opened. The second case matters because spending can
+    /// happen outside this window — the measurement probes in <c>tools/</c> bill the same cap —
+    /// and because coming back to a heavy day deserves the same perspective as reaching one.
+    ///
+    /// Once, though, not once per refresh: after it fires, the baseline has moved above the mark
+    /// and nothing crosses again until tomorrow.
+    /// </remarks>
+    private void WarnIfPastATypicalDay(decimal spentToday, BudgetSnapshot budget, DateTimeOffset now)
+    {
+        var today = BudgetDay.StartOf(now);
+        var typical = budget.MonthlyCap / Math.Max(1, BudgetDay.DaysInMonth(now));
+
+        // A new day — or a new session — starts the watch from zero rather than from wherever
+        // the day already is, so a day that is ALREADY past the mark is treated as crossing it
+        // on the first look instead of silently sitting above it.
+        if (_typicalDayFor != today)
+        {
+            _typicalDayFor = today;
+            _spentAtLastCheck = 0m;
+        }
+
+        var crossed = _spentAtLastCheck < typical && spentToday >= typical;
+        _spentAtLastCheck = spentToday;
+
+        if (!crossed)
+        {
+            return;
+        }
+
+        ShowToast(
+            "Past a typical day",
+            $"${spentToday:0.00} today, against the ${typical:0.00} a flat month allows. "
+            + $"${budget.RemainingThisMonth:0.00} left for the other {Math.Max(0, budget.DaysLeft - 1)} day(s).");
+    }
+
+    /// <summary>
+    /// Flashes a short message into the top-right corner and fades it out again.
+    /// </summary>
+    /// <remarks>
+    /// Exists for Shift+R. Marking spends money and answers a question — "is this right?" —
+    /// and it used to report both in 10pt mono in the corner of the status bar, where the text
+    /// also never cleared, so two identical marks in a row were indistinguishable from one.
+    ///
+    /// Deliberately not a dialog. This interrupts nothing, takes no focus and ignores the mouse,
+    /// because it arrives while the pen is mid-problem and the answer is a glance, not a
+    /// decision. The status bar still gets the same message for anyone looking there.
+    /// </remarks>
+    private void ShowToast(string headline, string detail, SkillOutcome? outcome = null)
+    {
+        ToastVerdict.Text = headline;
+        ToastDetail.Text = detail;
+
+        ToastVerdict.SetResourceReference(
+            System.Windows.Controls.TextBlock.ForegroundProperty,
+            outcome switch
+            {
+                SkillOutcome.Right => "Success",
+                SkillOutcome.Wrong => "Major",
+                _ => "TextBody",
+            });
+
+        _toastUntil = DateTime.UtcNow + ToastLife;
+
+        // Restarted rather than queued: a second mark supersedes the first, and two toasts
+        // sliding over each other would be harder to read than the one that is still true.
+        Toast.BeginAnimation(OpacityProperty, null);
+        ToastSlide.BeginAnimation(TranslateTransform.YProperty, null);
+        Toast.Opacity = 1;
+        ToastSlide.Y = 0;
+
+        _toastTimer ??= CreateToastTimer();
+        _toastTimer.Stop();
+        _toastTimer.Start();
+    }
+
+    private DispatcherTimer CreateToastTimer()
+    {
+        var timer = new DispatcherTimer(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(250),
+        };
+
+        timer.Tick += (_, _) =>
+        {
+            if (DateTime.UtcNow < _toastUntil)
+            {
+                return;
+            }
+
+            // Stops as soon as it has faded: a timer left ticking behind an invisible element is
+            // a wake-up every quarter second for the rest of the session.
+            timer.Stop();
+
+            Toast.BeginAnimation(
+                OpacityProperty,
+                new System.Windows.Media.Animation.DoubleAnimation(0, TimeSpan.FromMilliseconds(420)));
+
+            ToastSlide.BeginAnimation(
+                TranslateTransform.YProperty,
+                new System.Windows.Media.Animation.DoubleAnimation(-10, TimeSpan.FromMilliseconds(420)));
+        };
+
+        return timer;
     }
 
     private async Task<bool> ConfirmSpendingPastTodayAsync()

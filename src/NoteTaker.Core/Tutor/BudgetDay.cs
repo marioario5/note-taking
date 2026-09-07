@@ -64,6 +64,17 @@ public static class BudgetDay
         return new DateTimeOffset(first, Zone.GetUtcOffset(first));
     }
 
+    /// <summary>How many days the month containing <paramref name="instant"/> has.</summary>
+    /// <remarks>
+    /// The divisor behind the flat share. February and August differ by three days, and dividing
+    /// by the real length is what keeps "eight dollars a month" true in both.
+    /// </remarks>
+    public static int DaysInMonth(DateTimeOffset instant)
+    {
+        var here = TimeZoneInfo.ConvertTime(instant, Zone);
+        return DateTime.DaysInMonth(here.Year, here.Month);
+    }
+
     /// <summary>Days left in the month, counting the one <paramref name="instant"/> falls in.</summary>
     public static int DaysLeftInMonth(DateTimeOffset instant)
     {

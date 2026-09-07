@@ -662,13 +662,39 @@ internal static class Program
             $"{client.ChatCalls} chat call(s), {client.SkillCheckCalls} mark(s)");
 
         // An unreadable page is a gap in the record, never a guess in it.
-        client.NextSkillCheck = null;
-        var nothing = await coordinator.RecordAttemptAsync(pageId, sectionId);
         var afterBlank = await tutorRepo.GetSkillEventsAsync(sectionId, DateTimeOffset.MinValue);
 
+        // The conclusion of the mark rides along with the next question about that page.
+        client.NextSkillCheck = new SkillVerdict("center of mass", SkillOutcome.Wrong, "moment arm inverted");
+        await coordinator.RecordAttemptAsync(pageId, sectionId);
+
+        var thread = await tutorRepo.GetOrCreateThreadAsync(pageId, null, "after a mark");
+        await coordinator.AskAsync(pageId, thread.Id, "why is that wrong?", null);
+
+        Check(
+            "A mark colours the question that follows it",
+            client.LastChatRequest?.UserMessage.Contains("moment arm inverted") == true,
+            $"sent: {client.LastChatRequest?.UserMessage}");
+
+        // The transcript is what gets resent every turn, so the note must not be in it.
+        var stored = await tutorRepo.GetMessagesAsync(thread.Id);
+        Check(
+            "The note never lands in the stored transcript",
+            stored.Any(m => m.Content == "why is that wrong?")
+                && stored.All(m => !m.Content.Contains("marking pass")),
+            "the rider was persisted and would be paid for on every later turn");
+
+        await coordinator.AskAsync(pageId, thread.Id, "and the next step?", null);
+        Check(
+            "It colours only that one turn",
+            client.LastChatRequest?.UserMessage.Contains("marking pass") == false,
+            "the mark was resent on a later turn");
+
+        client.NextSkillCheck = null;
+        var nothing2 = await coordinator.RecordAttemptAsync(pageId, sectionId);
         Check(
             "A page with nothing to judge records nothing",
-            nothing is null && afterBlank.Count == after.Count,
+            nothing2 is null && afterBlank.Count == after.Count,
             "an unreadable page was recorded as a data point");
     }
 
@@ -1374,6 +1400,11 @@ internal static class Program
             "A short month is counted as short and a long one as long",
             BudgetDay.DaysLeftInMonth(feb) == 28 && BudgetDay.DaysLeftInMonth(aug) == 31,
             $"February {BudgetDay.DaysLeftInMonth(feb)}, August {BudgetDay.DaysLeftInMonth(aug)}");
+
+        Check(
+            "A month's real length is what the flat share divides by",
+            BudgetDay.DaysInMonth(feb) == 28 && BudgetDay.DaysInMonth(aug) == 31,
+            $"February {BudgetDay.DaysInMonth(feb)}, August {BudgetDay.DaysInMonth(aug)}");
 
         Check(
             "The month starts on its first day",
